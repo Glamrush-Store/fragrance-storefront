@@ -102,9 +102,23 @@ export interface HomepageSection {
 }
 
 export interface StorefrontHomepage {
-  storefront: { slug: string; name: string }
+  storefront: {
+    slug: string
+    name: string
+    announcement: {
+      primary_text: string | null
+      secondary_text: string | null
+    }
+  }
   campaign: StorefrontCampaign | null
   sections: HomepageSection[]
+}
+
+export interface StorefrontConfiguration {
+  announcement: {
+    primary_text: string | null
+    secondary_text: string | null
+  }
 }
 
 export interface FacetOption {
