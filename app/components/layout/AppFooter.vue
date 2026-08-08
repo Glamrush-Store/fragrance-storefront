@@ -73,7 +73,16 @@ const joinNewsletter = async () => {
       </div>
       <div class="flex flex-col gap-6 pt-8 text-sm text-neutral-600 sm:flex-row sm:items-center sm:justify-between">
         <NuxtLink to="/" class="font-display text-xl tracking-[0.12em] text-neutral-950">GLAMRUSH</NuxtLink>
-        <div class="flex flex-wrap gap-6"><NuxtLink to="/#shop">Shop</NuxtLink><NuxtLink to="/#story">About</NuxtLink><a href="mailto:hello@glamrush.com">Contact</a><a href="#">Instagram</a></div>
+        <nav class="flex max-w-2xl flex-wrap justify-center gap-x-6 gap-y-3" aria-label="Footer navigation">
+          <NuxtLink to="/#shop">Shop</NuxtLink>
+          <NuxtLink to="/about-us">About</NuxtLink>
+          <NuxtLink to="/faqs">FAQs</NuxtLink>
+          <NuxtLink to="/contact">Contact</NuxtLink>
+          <NuxtLink to="/shipping-policy">Shipping</NuxtLink>
+          <NuxtLink to="/returns-and-refunds">Returns</NuxtLink>
+          <NuxtLink to="/privacy-policy">Privacy</NuxtLink>
+          <NuxtLink to="/terms-and-conditions">Terms</NuxtLink>
+        </nav>
         <p>© {{ new Date().getFullYear() }} Glamrush</p>
       </div>
     </div>

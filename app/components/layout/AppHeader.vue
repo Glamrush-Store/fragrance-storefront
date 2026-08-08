@@ -8,13 +8,23 @@ const searchOpen = ref(false)
 const searchQuery = ref('')
 const { user, ensureSession, logout } = useAuth()
 const { ensureCart } = useCart()
+const { getConfiguration } = useStorefront()
 const loggingOut = ref(false)
+
+const { data: configurationResponse } = await useAsyncData(
+  'storefront-configuration',
+  () => getConfiguration(),
+  { dedupe: 'defer' },
+)
+const announcementPrimaryText = computed(() => configurationResponse.value?.data.announcement.primary_text?.trim() || '')
+const announcementSecondaryText = computed(() => configurationResponse.value?.data.announcement.secondary_text?.trim() || '')
+const hasAnnouncement = computed(() => Boolean(announcementPrimaryText.value || announcementSecondaryText.value))
 
 const navigation = [
   { label: 'New in', to: '/#new' },
   { label: 'Shop fragrance', to: '/#shop' },
-  { label: 'Scent wardrobe', to: '/#ritual' },
-  { label: 'Our story', to: '/#story' },
+  { label: 'Our story', to: '/about-us' },
+  { label: 'Help & FAQs', to: '/faqs' },
 ]
 
 const submitSearch = () => {
@@ -43,8 +53,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="bg-neutral-950 px-4 py-2 text-center text-[10px] font-medium uppercase tracking-[0.16em] text-white sm:text-xs">
-    <span>Free Lagos delivery on orders over ₦100,000</span><span class="mx-4 hidden text-glam-gold sm:inline">✦</span><span class="hidden sm:inline">Complimentary scent consultation</span>
+  <div v-if="hasAnnouncement" class="bg-neutral-950 px-4 py-2 text-center text-[10px] font-medium uppercase tracking-[0.16em] text-white sm:text-xs">
+    <span v-if="announcementPrimaryText">{{ announcementPrimaryText }}</span><span v-if="announcementPrimaryText && announcementSecondaryText" class="mx-4 hidden text-glam-gold sm:inline">✦</span><span v-if="announcementSecondaryText" class="hidden sm:inline">{{ announcementSecondaryText }}</span>
   </div>
 
     <header class="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
