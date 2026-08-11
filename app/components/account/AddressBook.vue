@@ -12,7 +12,7 @@ const editingId = ref<string | null>(null)
 
 const emptyForm = (): AddressPayload => ({
   label: '', first_name: '', last_name: '', phone: '', address_line_1: '', address_line_2: '',
-  country: 'Nigeria', state: '', city: '', postal_code: '', is_default: false,
+  country: 'NGA', state: '', city: '', postal_code: '', is_default: false,
 })
 const form = reactive<AddressPayload>(emptyForm())
 
@@ -127,10 +127,8 @@ onMounted(load)
         <label class="block"><span class="mb-2 block text-xs font-semibold">Last name</span><UInput v-model="form.last_name" autocomplete="family-name" class="w-full" required /></label>
         <label class="block sm:col-span-2"><span class="mb-2 block text-xs font-semibold">Address line 1</span><UInput v-model="form.address_line_1" autocomplete="address-line1" class="w-full" required /></label>
         <label class="block sm:col-span-2"><span class="mb-2 block text-xs font-semibold">Address line 2</span><UInput v-model="form.address_line_2" autocomplete="address-line2" class="w-full" /></label>
-        <label class="block"><span class="mb-2 block text-xs font-semibold">City</span><UInput v-model="form.city" autocomplete="address-level2" class="w-full" required /></label>
-        <label class="block"><span class="mb-2 block text-xs font-semibold">State</span><UInput v-model="form.state" autocomplete="address-level1" class="w-full" required /></label>
+        <AddressLocationFields v-model:country="form.country" v-model:state="form.state" v-model:city="form.city" />
         <label class="block"><span class="mb-2 block text-xs font-semibold">Postal code</span><UInput v-model="form.postal_code" autocomplete="postal-code" class="w-full" required /></label>
-        <label class="block"><span class="mb-2 block text-xs font-semibold">Country</span><UInput v-model="form.country" autocomplete="country-name" class="w-full" required /></label>
       </div>
       <label class="mt-6 flex cursor-pointer items-center gap-3 text-sm"><input v-model="form.is_default" type="checkbox" class="size-4 accent-neutral-950"> Make this my default delivery address</label>
       <div class="mt-8 flex gap-3"><UButton type="submit" :label="editingId ? 'Save changes' : 'Save address'" color="neutral" class="rounded-none !text-white" :loading="saving" /><UButton type="button" label="Cancel" color="neutral" variant="outline" class="rounded-none" @click="resetForm" /></div>
