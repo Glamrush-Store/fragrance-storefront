@@ -93,7 +93,7 @@ const confirm = () => {
             :key="variant.id"
             type="button"
             class="flex min-h-14 items-center justify-between gap-4 border px-4 py-3 text-left transition"
-            :class="variant.id === selectedId ? 'border-neutral-950 bg-neutral-950 text-white' : 'border-neutral-300 bg-white hover:border-neutral-950 disabled:cursor-not-allowed disabled:opacity-40'"
+            :class="variant.id === selectedId ? 'border-neutral-950 bg-neutral-950 !text-white [&_*]:!text-white' : 'border-neutral-300 bg-white hover:border-neutral-950 disabled:cursor-not-allowed disabled:opacity-40'"
             :disabled="variant.available === false || variant.inStock === false"
             :aria-pressed="variant.id === selectedId"
             @click="selectedId = variant.id"

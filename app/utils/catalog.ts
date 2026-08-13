@@ -1,4 +1,4 @@
-import type { Category, MediaImage, Product } from '~/types/catalog'
+import type { Category, MediaImage, Product, ProductCategory } from '~/types/catalog'
 
 type CatalogImages = Product['images'] | Category['images']
 
@@ -17,6 +17,13 @@ export const catalogImageUrl = (images: CatalogImages, fallback = '/favicon.ico'
   if (Array.isArray(images)) return mediaUrl(images[0]) || fallback
   return mediaUrl(images) || fallback
 }
+
+/**
+ * Prefer the explicit many-to-many primary category while remaining compatible
+ * with responses produced before the category pivot rollout.
+ */
+export const productPrimaryCategory = (product?: Product | null): ProductCategory | undefined =>
+  product?.primary_category ?? product?.category ?? product?.categories?.[0]
 
 export const facetLabel = (type: string): string => type
   .split('_')

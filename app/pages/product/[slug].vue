@@ -22,6 +22,17 @@ const { data: productResponse, status, error, refresh } = await useAsyncData(
 )
 
 const product = computed(() => productResponse.value?.data)
+const primaryCategory = computed(() => productPrimaryCategory(product.value))
+const productCategories = computed(() => {
+  if (!product.value) return []
+
+  const categories = product.value.categories?.length
+    ? product.value.categories
+    : primaryCategory.value ? [primaryCategory.value] : []
+
+  return categories.filter((category, index, list) =>
+    list.findIndex(candidate => String(candidate.id) === String(category.id)) === index)
+})
 const selectedVariantId = shallowRef<string | number | undefined>()
 const quantity = shallowRef(1)
 const addingToBag = shallowRef(false)
@@ -145,7 +156,7 @@ useSeoMeta({
         <div class="mx-auto max-w-[1280px] px-4 pt-6 sm:px-6 lg:px-8">
           <nav class="flex flex-wrap items-center gap-2 text-xs text-neutral-500" aria-label="Breadcrumb">
             <NuxtLink to="/" class="hover:text-neutral-950">Home</NuxtLink><UIcon name="i-lucide-chevron-right" class="size-3" />
-            <NuxtLink v-if="product.category" :to="`/category/${product.category.slug}`" class="hover:text-neutral-950">{{ product.category.name }}</NuxtLink><UIcon v-if="product.category" name="i-lucide-chevron-right" class="size-3" />
+            <NuxtLink v-if="primaryCategory" :to="`/category/${primaryCategory.slug}`" class="hover:text-neutral-950">{{ primaryCategory.name }}</NuxtLink><UIcon v-if="primaryCategory" name="i-lucide-chevron-right" class="size-3" />
             <span class="text-neutral-900">{{ product.name }}</span>
           </nav>
         </div>
@@ -158,6 +169,18 @@ useSeoMeta({
             <h1 class="mt-3 font-display text-[clamp(2.5rem,5vw,4.5rem)] leading-[.98] tracking-[-0.03em]">{{ product.name }}</h1>
             <CatalogProductPrice v-if="displayProduct" :product="displayProduct" />
             <p v-if="product.shortDescription" class="mt-6 text-sm leading-7 text-neutral-600">{{ product.shortDescription }}</p>
+
+            <div v-if="productCategories.length" class="mt-5 flex flex-wrap items-center gap-2" aria-label="Product categories">
+              <span class="mr-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-400">Explore</span>
+              <NuxtLink
+                v-for="category in productCategories"
+                :key="category.id"
+                :to="`/category/${category.slug}`"
+                class="border border-neutral-300 px-3 py-1.5 text-xs text-neutral-700 transition hover:border-neutral-950 hover:text-neutral-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
+              >
+                {{ category.name }}
+              </NuxtLink>
+            </div>
 
             <VariantSelector v-if="product.variants?.length" :variants="product.variants" :selected-id="selectedVariantId" class="mt-7" @select="selectVariant" />
 
