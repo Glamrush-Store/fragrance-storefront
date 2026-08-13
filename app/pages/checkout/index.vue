@@ -6,7 +6,7 @@ const router = useRouter()
 const toast = useToast()
 const { user, ensureSession } = useAuth()
 const { listAddresses } = useCustomerAccount()
-const { items, subtotal, count, loading: cartLoading, quantityQueuedIds, quantitySavingIds, ensureCart, queueItemQuantity, removeItem, clearCart } = useCart()
+const { cartToken, items, subtotal, count, loading: cartLoading, quantityQueuedIds, quantitySavingIds, ensureCart, queueItemQuantity, removeItem, clearCart } = useCart()
 const { getShippingOptions, getPaymentMethods, validateDiscount, createOrder, initializePayment } = useCheckout()
 
 const addresses = ref<CustomerAddress[]>([])
@@ -241,7 +241,7 @@ const submitOrder = async () => {
     const payment = paymentResponse.data
 
     if (import.meta.client) {
-      sessionStorage.setItem('glamrush_pending_payment', JSON.stringify({ orderId: order.id, orderNumber: order.order_number, provider: payment.provider, reference: payment.reference }))
+      sessionStorage.setItem('glamrush_pending_payment', JSON.stringify({ orderId: order.id, orderNumber: order.order_number, provider: payment.provider, reference: payment.reference, paymentMethod: selectedPaymentCode.value, cartToken: cartToken.value }))
       sessionStorage.removeItem(checkoutAttemptStorageKey)
     }
     await clearCart()

@@ -44,6 +44,7 @@ export interface CustomerOrder {
   id: string
   order_number: string
   status: string
+  payment_method?: 'paystack' | 'flutterwave' | 'pay_on_delivery' | null
   discount_code: string | null
   subtotal: number | string
   discount_amount: number | string

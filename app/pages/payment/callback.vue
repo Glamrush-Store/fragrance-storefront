@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import type { PaymentInitialization } from '~/types/checkout'
+import type { OrderRestoreCartResult, PaymentInitialization, PaymentMethod } from '~/types/checkout'
 
 type CallbackState = 'verifying' | 'completed' | 'failed'
+type PendingPayment = { orderId?: string; orderNumber?: string; provider?: string; reference?: string; paymentMethod?: PaymentMethod['code']; cartToken?: string | null }
 
 const route = useRoute()
-const { verifyPayment } = useCheckout()
+const router = useRouter()
+const toast = useToast()
+const { verifyPayment, initializePayment, restoreOrderCart } = useCheckout()
+const { fetchCart } = useCart()
 const { user, ensureSession } = useAuth()
 const state = ref<CallbackState>('verifying')
 const message = ref('Confirming this transaction directly with the payment provider.')
 const result = ref<PaymentInitialization | null>(null)
+const restoreResult = ref<OrderRestoreCartResult | null>(null)
+const restoreError = ref('')
 const confirmedAt = ref<Date | null>(null)
+const retrying = ref(false)
+const restoring = ref(false)
 
-const pendingPayment = ref<{ orderId?: string; orderNumber?: string; provider?: string; reference?: string }>({})
+const pendingPayment = ref<PendingPayment>({})
 const provider = computed(() => {
   const value = typeof route.query.provider === 'string' ? route.query.provider.toLowerCase() : pendingPayment.value.provider?.toLowerCase()
   return value === 'paystack' || value === 'flutterwave' ? value : null
@@ -19,19 +27,25 @@ const provider = computed(() => {
 const transactionId = computed(() => String(route.query.transaction_id || route.query.reference || pendingPayment.value.reference || ''))
 const callbackReference = computed(() => String(route.query.tx_ref || route.query.reference || result.value?.reference || ''))
 const receiptOrder = computed(() => pendingPayment.value.orderNumber || result.value?.payment.order_id || 'Unavailable')
+const canRetryPayment = computed(() => Boolean(pendingPayment.value.orderId && pendingPayment.value.paymentMethod && pendingPayment.value.paymentMethod !== 'pay_on_delivery'))
+const canRestoreCart = computed(() => Boolean(pendingPayment.value.orderId))
 
 const formatMoney = (amount: number | string, currency: string) => new Intl.NumberFormat('en-NG', {
   style: 'currency', currency: currency || 'NGN', minimumFractionDigits: 2, maximumFractionDigits: 2,
 }).format(Number(amount) || 0)
 const formatDate = (value: Date | null) => value ? new Intl.DateTimeFormat('en-NG', {
   dateStyle: 'medium', timeStyle: 'short',
-}).format(value) : '—'
+}).format(value) : '-'
 const providerName = computed(() => provider.value === 'flutterwave' ? 'Flutterwave' : provider.value === 'paystack' ? 'Paystack' : 'Payment provider')
+const newIdempotencyKey = () => globalThis.crypto?.randomUUID?.()
+  || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`
 
 const validatePayment = async () => {
   state.value = 'verifying'
   message.value = 'Confirming this transaction directly with the payment provider.'
   result.value = null
+  restoreResult.value = null
+  restoreError.value = ''
 
   if (!provider.value) {
     state.value = 'failed'
@@ -50,7 +64,7 @@ const validatePayment = async () => {
 
     if (response.data.payment.status !== 'paid') {
       state.value = 'failed'
-      message.value = `The provider returned “${response.data.payment.status}”. This payment has not been confirmed.`
+      message.value = `The provider returned "${response.data.payment.status}". This payment has not been confirmed.`
       return
     }
 
@@ -65,6 +79,52 @@ const validatePayment = async () => {
   }
 }
 
+const retryPayment = async () => {
+  if (!pendingPayment.value.orderId || !pendingPayment.value.paymentMethod) {
+    message.value = 'This browser no longer has the order details needed to retry payment. Please open your order history or contact support.'
+    return
+  }
+
+  retrying.value = true
+  restoreResult.value = null
+  restoreError.value = ''
+  try {
+    const response = await initializePayment(pendingPayment.value.orderId, pendingPayment.value.paymentMethod, newIdempotencyKey(), pendingPayment.value.cartToken)
+    const payment = response.data
+    if (import.meta.client) {
+      sessionStorage.setItem('glamrush_pending_payment', JSON.stringify({
+        ...pendingPayment.value,
+        provider: payment.provider,
+        reference: payment.reference,
+      }))
+    }
+    if (payment.authorization_url) {
+      window.location.assign(payment.authorization_url)
+      return
+    }
+    await router.push({ path: '/checkout/success', query: { order: pendingPayment.value.orderNumber, payment: payment.status } })
+  }
+  catch (error) {
+    message.value = authErrorDetails(error, 'We could not restart payment for this order. Restore your bag as a fallback, then check out again.').message
+  }
+  finally { retrying.value = false }
+}
+
+const restoreCart = async () => {
+  if (!pendingPayment.value.orderId) return
+  restoring.value = true
+  restoreError.value = ''
+  try {
+    const response = await restoreOrderCart(pendingPayment.value.orderId, false, pendingPayment.value.cartToken)
+    restoreResult.value = response.data
+    restoreError.value = ''
+    await fetchCart()
+    toast.add({ title: 'Bag restored', description: `${response.data.restored_count} item${response.data.restored_count === 1 ? '' : 's'} restored.`, color: response.data.skipped_count ? 'warning' : 'success' })
+  }
+  catch (error) { restoreError.value = authErrorDetails(error, 'We could not restore this order into your bag.').message }
+  finally { restoring.value = false }
+}
+
 const printReceipt = () => window.print()
 
 onMounted(async () => {
@@ -74,7 +134,7 @@ onMounted(async () => {
   await validatePayment()
 })
 
-useSeoMeta({ title: 'Payment confirmation — Glamrush', description: 'Verify your Glamrush payment and view your receipt.', robots: 'noindex' })
+useSeoMeta({ title: 'Payment confirmation - Glamrush', description: 'Verify your Glamrush payment and view your receipt.', robots: 'noindex' })
 </script>
 
 <template>
@@ -121,10 +181,35 @@ useSeoMeta({ title: 'Payment confirmation — Glamrush', description: 'Verify yo
       <section v-else class="w-full max-w-2xl border border-neutral-900/10 bg-white p-8 text-center shadow-[0_35px_100px_rgba(48,36,24,.08)] sm:p-12" aria-live="polite">
         <div class="mx-auto grid size-16 place-items-center rounded-full bg-red-50"><UIcon name="i-lucide-x" class="size-7 text-red-700" /></div>
         <p class="mt-8 text-[10px] font-semibold uppercase tracking-[0.22em] text-red-700">Payment not confirmed</p>
-        <h1 class="mt-3 font-display text-4xl sm:text-5xl">Something didn’t complete.</h1>
+        <h1 class="mt-3 font-display text-4xl sm:text-5xl">Something did not complete.</h1>
         <p class="mx-auto mt-5 max-w-lg text-sm leading-7 text-neutral-500">{{ message }}</p>
-        <div class="mt-5 inline-flex items-center gap-2 bg-neutral-100 px-3 py-2 font-mono text-[10px] text-neutral-500"><span>{{ providerName }}</span><span>·</span><span>{{ callbackReference || transactionId || 'No reference' }}</span></div>
-        <div class="mt-9 flex flex-col justify-center gap-3 sm:flex-row"><UButton type="button" label="Check payment again" icon="i-lucide-refresh-cw" color="neutral" class="rounded-none !text-white" @click="validatePayment" /><UButton v-if="user" to="/account#orders" label="View order history" color="neutral" variant="outline" class="rounded-none" /><UButton to="/" label="Continue shopping" color="neutral" variant="ghost" class="rounded-none" /></div>
+        <div class="mt-5 inline-flex items-center gap-2 bg-neutral-100 px-3 py-2 font-mono text-[10px] text-neutral-500"><span>{{ providerName }}</span><span>/</span><span>{{ callbackReference || transactionId || 'No reference' }}</span></div>
+        <div class="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+          <UButton type="button" label="Retry payment" icon="i-lucide-credit-card" color="neutral" class="rounded-none !text-white" :loading="retrying" :disabled="!canRetryPayment || restoring" @click="retryPayment" />
+          <UButton type="button" label="Check again" icon="i-lucide-refresh-cw" color="neutral" variant="outline" class="rounded-none" :disabled="retrying || restoring" @click="validatePayment" />
+          <UButton type="button" label="Restore bag" icon="i-lucide-shopping-bag" color="neutral" variant="ghost" class="rounded-none" :loading="restoring" :disabled="!canRestoreCart || retrying" @click="restoreCart" />
+        </div>
+        <p v-if="restoreError" class="mx-auto mt-4 max-w-md text-sm font-semibold leading-6 text-red-700">{{ restoreError }}</p>
+        <p v-if="!canRetryPayment" class="mx-auto mt-4 max-w-md text-xs leading-5 text-amber-800">Payment retry is available immediately after checkout in the same browser session. Restore your bag if this order is now marked failed.</p>
+        <div v-if="restoreResult" class="mt-8 border border-neutral-200 bg-[#fcfaf6] p-5 text-left">
+          <div class="flex items-start justify-between gap-4">
+            <div><p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-glam-gold">Bag recovery</p><h2 class="mt-1 font-display text-2xl">{{ restoreResult.restored_count }} restored, {{ restoreResult.skipped_count }} skipped</h2></div>
+            <UButton to="/checkout" label="Checkout" icon="i-lucide-arrow-right" trailing color="neutral" size="sm" class="rounded-none !text-white" :disabled="restoreResult.restored_count === 0" />
+          </div>
+          <div v-if="restoreResult.price_changes.length" class="mt-5 border-t border-neutral-200 pt-4">
+            <p class="text-xs font-semibold text-neutral-700">Updated prices</p>
+            <ul class="mt-2 space-y-2 text-xs text-neutral-500">
+              <li v-for="change in restoreResult.price_changes" :key="`${change.product_id}-${change.product_variant_id || 'base'}`" class="flex justify-between gap-4"><span>{{ change.name }}</span><span class="shrink-0">{{ formatMoney(change.old_unit_price, 'NGN') }} to {{ formatMoney(change.new_unit_price, 'NGN') }}</span></li>
+            </ul>
+          </div>
+          <div v-if="restoreResult.skipped_items.length" class="mt-5 border-t border-neutral-200 pt-4">
+            <p class="text-xs font-semibold text-neutral-700">Skipped items</p>
+            <ul class="mt-2 space-y-2 text-xs text-neutral-500">
+              <li v-for="item in restoreResult.skipped_items" :key="`${item.product_id}-${item.product_variant_id || 'base'}-${item.reason}`"><b class="text-neutral-800">{{ item.name }}</b> - {{ item.message }}</li>
+            </ul>
+          </div>
+        </div>
+        <div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row"><UButton v-if="user" to="/account#orders" label="View order history" color="neutral" variant="outline" class="rounded-none" /><UButton to="/" label="Continue shopping" color="neutral" variant="ghost" class="rounded-none" /></div>
       </section>
     </main>
   </div>
