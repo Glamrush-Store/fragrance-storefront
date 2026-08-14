@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CartItem } from '~/types/checkout'
+import { PRODUCT_IMAGE_FALLBACK } from '~/utils/catalog'
 
 const open = ref(false)
 const toast = useToast()
@@ -114,8 +115,7 @@ watch(open, async (isOpen) => {
           <ul class="max-h-[min(25rem,55vh)] divide-y divide-neutral-200 overflow-y-auto overscroll-contain">
             <li v-for="item in items" :key="item.id" class="relative grid grid-cols-[72px_1fr] gap-4 px-5 py-4 transition-opacity" :class="pendingItemIds.has(item.id) ? 'opacity-55' : ''">
               <NuxtLink :to="`/product/${item.slug}`" class="aspect-[4/5] overflow-hidden bg-[#ebe6de]" @click="close()">
-                <img v-if="item.thumb" :src="item.thumb" :alt="item.name" class="h-full w-full object-cover transition duration-500 hover:scale-105">
-                <span v-else class="grid h-full place-items-center font-display text-2xl text-neutral-300">G</span>
+                <img :src="item.thumb || PRODUCT_IMAGE_FALLBACK" :alt="item.name" class="h-full w-full transition duration-500 hover:scale-105" :class="item.thumb ? 'object-cover' : 'object-contain'">
               </NuxtLink>
 
               <div class="min-w-0 pr-7">

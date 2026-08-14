@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CustomerOrder, OrderItem } from '~/types/account'
 import type { OrderRestoreCartResult } from '~/types/checkout'
+import { PRODUCT_IMAGE_FALLBACK } from '~/utils/catalog'
 
 const router = useRouter()
 const toast = useToast()
@@ -28,9 +29,9 @@ const statusClass = (value: string) => ({
 }[value] || 'bg-neutral-100 text-neutral-700')
 const itemImage = (item: OrderItem) => {
   const image = item.images?.[0]
-  if (!image) return null
+  if (!image) return PRODUCT_IMAGE_FALLBACK
   if (typeof image === 'string') return image
-  return image.thumb || image.medium || image.url || null
+  return image.thumb || image.medium || image.url || PRODUCT_IMAGE_FALLBACK
 }
 
 const retryPayment = async (order: CustomerOrder) => {
@@ -97,7 +98,7 @@ onMounted(() => load())
         <div class="border-t border-neutral-100 px-5 pb-6 sm:px-6">
           <div class="divide-y divide-neutral-100">
             <div v-for="item in order.items" :key="item.id" class="grid grid-cols-[64px_1fr_auto] gap-4 py-5">
-              <div class="aspect-square overflow-hidden bg-[#eee9e1]"><img v-if="itemImage(item)" :src="itemImage(item)!" :alt="item.product_name" class="h-full w-full object-cover"><div v-else class="flex h-full items-center justify-center font-display text-xl text-neutral-300">G</div></div>
+              <div class="aspect-square overflow-hidden bg-[#eee9e1]"><img :src="itemImage(item)" :alt="item.product_name" class="h-full w-full" :class="itemImage(item) === PRODUCT_IMAGE_FALLBACK ? 'object-contain' : 'object-cover'"></div>
               <div class="min-w-0"><NuxtLink :to="`/product/${item.product_slug}`" class="font-medium hover:underline">{{ item.product_name }}</NuxtLink><p class="mt-1 text-xs text-neutral-400">{{ item.sku || 'Glamrush selection' }} / Qty {{ item.quantity }}</p></div>
               <p class="text-sm font-semibold">{{ currency(item.line_total, order.currency) }}</p>
             </div>

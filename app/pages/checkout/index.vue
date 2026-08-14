@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PRODUCT_IMAGE_FALLBACK } from '~/utils/catalog'
 import type { CustomerAddress } from '~/types/account'
 import type { CartItem, CheckoutAddress, DiscountQuote, PaymentMethod, ShippingOption } from '~/types/checkout'
 
@@ -352,7 +353,7 @@ useSeoMeta({ title: 'Checkout — Glamrush', description: 'Securely complete you
           <p v-if="pendingOrder" class="border-b border-amber-200 bg-amber-50 px-6 py-3 text-xs leading-5 text-amber-900">Your order has already been created. Bag editing is paused while you retry payment.</p>
           <div class="max-h-[30rem] divide-y divide-neutral-100 overflow-auto px-6">
             <div v-for="item in items" :key="item.id" class="grid grid-cols-[68px_minmax(0,1fr)] gap-4 py-5 transition-opacity" :class="pendingItemIds.has(item.id) || quantitySavingIds[item.id] ? 'pointer-events-none opacity-50' : ''">
-              <NuxtLink :to="`/product/${item.slug}`" class="aspect-[4/5] overflow-hidden bg-[#eee9e1]"><img v-if="item.thumb" :src="item.thumb" :alt="item.name" class="h-full w-full object-cover"><span v-else class="grid h-full place-items-center font-display text-2xl text-neutral-300">G</span></NuxtLink>
+              <NuxtLink :to="`/product/${item.slug}`" class="aspect-[4/5] overflow-hidden bg-[#eee9e1]"><img :src="item.thumb || PRODUCT_IMAGE_FALLBACK" :alt="item.name" class="h-full w-full" :class="item.thumb ? 'object-cover' : 'object-contain'"></NuxtLink>
               <div class="min-w-0">
                 <div class="flex items-start justify-between gap-3"><div class="min-w-0"><NuxtLink :to="`/product/${item.slug}`" class="line-clamp-2 text-sm font-medium leading-5 hover:underline">{{ item.name }}</NuxtLink><p v-if="itemDetails(item)" class="mt-1 truncate text-[10px] uppercase tracking-[0.1em] text-neutral-400">{{ itemDetails(item) }}</p></div><p class="shrink-0 text-sm font-semibold">{{ formatMoney(Number(item.unit_price) * item.quantity) }}</p></div>
                 <div class="mt-4 flex items-center justify-between gap-3">
