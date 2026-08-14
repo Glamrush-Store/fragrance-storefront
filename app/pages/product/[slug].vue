@@ -60,10 +60,10 @@ const displayProduct = computed<Product | undefined>(() => {
 })
 const images = computed(() => {
   if (!product.value) return []
-  return [...new Set([
-    ...catalogImageUrls(selectedVariant.value?.images),
-    ...catalogImageUrls(product.value.images),
-  ])]
+  const variantImages = catalogImageUrls(selectedVariant.value?.images)
+  const productImages = catalogImageUrls(product.value.images)
+
+  return [...new Set(variantImages.length ? variantImages : productImages)]
 })
 const attributes = computed(() => selectedVariant.value?.attributes?.length ? selectedVariant.value.attributes : product.value?.default_attributes ?? [])
 const available = computed(() => displayProduct.value?.available !== false && selectedVariant.value?.inStock !== false)
@@ -139,7 +139,7 @@ useSeoMeta({
     <LayoutAppHeader />
 
     <main>
-      <div v-if="status === 'pending'" class="mx-auto grid max-w-[1280px] gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,.65fr)] lg:px-8 lg:py-14">
+      <div v-if="status === 'pending'" class="mx-auto grid max-w-[1120px] justify-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,600px)_minmax(340px,440px)] lg:gap-16 lg:px-8 lg:py-14">
         <USkeleton class="aspect-[4/5] w-full rounded-none" />
         <div class="space-y-6 pt-4"><USkeleton class="h-3 w-28" /><USkeleton class="h-14 w-4/5" /><USkeleton class="h-5 w-32" /><USkeleton class="h-28 w-full" /><USkeleton class="h-14 w-full" /></div>
       </div>
@@ -161,7 +161,7 @@ useSeoMeta({
           </nav>
         </div>
 
-        <div class="mx-auto grid max-w-[1280px] gap-10 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,.65fr)] lg:gap-16 lg:px-8 lg:py-12">
+        <div class="mx-auto grid max-w-[1120px] justify-center gap-10 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,600px)_minmax(340px,440px)] lg:gap-16 lg:px-8 lg:py-12">
           <ProductGallery :images="images" :product-name="product.name" />
 
           <aside class="lg:sticky lg:top-24 lg:self-start">
@@ -203,13 +203,22 @@ useSeoMeta({
             <UButton label="Save to wishlist" icon="i-lucide-heart" color="neutral" variant="outline" size="lg" block class="mt-3 rounded-none" />
 
             <div class="mt-8 divide-y divide-neutral-200 border-y border-neutral-200 text-sm">
-              <details v-if="product.description" open class="group py-5"><summary class="flex cursor-pointer list-none items-center justify-between font-semibold">About this fragrance<UIcon name="i-lucide-plus" class="size-4 group-open:rotate-45" /></summary><p class="mt-3 whitespace-pre-line leading-7 text-neutral-600">{{ product.description }}</p></details>
               <details class="group py-5"><summary class="flex cursor-pointer list-none items-center justify-between font-semibold">Delivery & returns<UIcon name="i-lucide-plus" class="size-4 group-open:rotate-45" /></summary><p class="mt-3 leading-7 text-neutral-600">Free Lagos delivery on qualifying orders. Unopened products may be returned according to our returns policy.</p></details>
               <details class="group py-5"><summary class="flex cursor-pointer list-none items-center justify-between font-semibold">Authenticity promise<UIcon name="i-lucide-plus" class="size-4 group-open:rotate-45" /></summary><p class="mt-3 leading-7 text-neutral-600">Every fragrance is sourced and selected for authenticity, quality and character.</p></details>
             </div>
             <p v-if="sku" class="mt-5 text-xs text-neutral-400">SKU: {{ sku }}</p>
           </aside>
         </div>
+
+        <section v-if="product.description" class="border-t border-neutral-200 bg-glam-ivory/40" aria-labelledby="product-description-heading">
+          <div class="mx-auto grid max-w-[1280px] gap-8 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[220px_minmax(0,760px)] lg:gap-16 lg:px-8 lg:py-24">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-glam-gold">Product details</p>
+              <h2 id="product-description-heading" class="mt-3 font-display text-3xl leading-tight sm:text-4xl">The story</h2>
+            </div>
+            <article class="product-description min-w-0" v-html="product.description" />
+          </div>
+        </section>
       </template>
     </main>
 
@@ -217,3 +226,77 @@ useSeoMeta({
     <Transition name="toast"><div v-if="notice" class="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 bg-neutral-950 px-5 py-3 text-sm text-white shadow-xl" role="status">{{ notice }}<UButton icon="i-lucide-x" aria-label="Dismiss" color="neutral" variant="ghost" size="xs" square @click="notice = ''" /></div></Transition>
   </div>
 </template>
+
+<style scoped>
+.product-description {
+  color: #49433e;
+  font-size: .95rem;
+  line-height: 1.9;
+}
+
+.product-description :deep(h1),
+.product-description :deep(h2) {
+  margin: 2.75rem 0 1rem;
+  color: #19130f;
+  font-family: var(--display);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -.025em;
+}
+
+.product-description :deep(h1:first-child),
+.product-description :deep(h2:first-child),
+.product-description :deep(h3:first-child),
+.product-description :deep(p:first-child) {
+  margin-top: 0;
+}
+
+.product-description :deep(h3),
+.product-description :deep(h4) {
+  margin: 2rem 0 .75rem;
+  color: #19130f;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.product-description :deep(p),
+.product-description :deep(ul),
+.product-description :deep(ol),
+.product-description :deep(blockquote) {
+  margin: 0 0 1.35rem;
+}
+
+.product-description :deep(ul),
+.product-description :deep(ol) {
+  padding-left: 1.4rem;
+}
+
+.product-description :deep(li) {
+  margin-bottom: .55rem;
+}
+
+.product-description :deep(a) {
+  color: #7c183a;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.product-description :deep(blockquote) {
+  border-left: 2px solid #c89b3c;
+  padding: .4rem 0 .4rem 1.4rem;
+  color: #19130f;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  line-height: 1.4;
+}
+
+.product-description :deep(img) {
+  height: auto;
+  max-width: 100%;
+  margin: 2rem 0;
+}
+</style>

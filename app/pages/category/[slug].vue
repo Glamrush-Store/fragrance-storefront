@@ -192,7 +192,7 @@ useSeoMeta({
             <article v-for="product in products" :key="product.id" class="group min-w-0">
               <div class="relative aspect-[4/5] overflow-hidden bg-neutral-100">
                 <NuxtLink :to="`/product/${product.slug}`" class="block h-full" :aria-label="`View ${product.name}`">
-                  <img :src="catalogImageUrl(product.images)" :alt="product.name" class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" loading="lazy" width="720" height="900">
+                  <img :src="catalogImageUrl(product.images)" :alt="product.name" class="h-full w-full transition duration-500 group-hover:scale-[1.025]" :class="hasCatalogImage(product.images) ? 'object-cover' : 'object-contain'" loading="lazy" width="720" height="900">
                 </NuxtLink>
                 <UBadge v-if="productPricing(product).onSale" label="Sale" color="error" variant="solid" class="absolute left-3 top-3 rounded-none" />
                 <UButton icon="i-lucide-heart" :aria-label="`Save ${product.name}`" color="neutral" variant="soft" square class="absolute right-3 top-3 rounded-full bg-white/90" />

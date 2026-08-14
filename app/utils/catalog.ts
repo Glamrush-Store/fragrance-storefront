@@ -2,6 +2,8 @@ import type { Category, MediaImage, Product, ProductCategory } from '~/types/cat
 
 type CatalogImages = Product['images'] | Category['images']
 
+export const PRODUCT_IMAGE_FALLBACK = '/images/product-placeholder.png'
+
 const mediaUrl = (image: string | MediaImage | undefined | null): string | undefined => {
   if (!image) return undefined
   if (typeof image === 'string') return image
@@ -13,10 +15,12 @@ export const catalogImageUrls = (images: CatalogImages): string[] => {
   return source.map(mediaUrl).filter((url): url is string => Boolean(url))
 }
 
-export const catalogImageUrl = (images: CatalogImages, fallback = '/favicon.ico'): string => {
+export const catalogImageUrl = (images: CatalogImages, fallback = PRODUCT_IMAGE_FALLBACK): string => {
   if (Array.isArray(images)) return mediaUrl(images[0]) || fallback
   return mediaUrl(images) || fallback
 }
+
+export const hasCatalogImage = (images: CatalogImages): boolean => catalogImageUrls(images).length > 0
 
 /**
  * Prefer the explicit many-to-many primary category while remaining compatible
