@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Product, ProductPrice, ProductVariant } from '~/types/catalog'
+import { applyCatalogImageFallback } from '~/utils/catalog'
 
 const props = withDefaults(defineProps<{
   product: Product
@@ -76,7 +77,7 @@ const confirm = () => {
     <template #body>
       <div class="grid grid-cols-[84px_1fr] gap-4 bg-[#f7f3ec] px-6 py-5">
         <div class="aspect-[4/5] overflow-hidden bg-white">
-          <img :src="catalogImageUrl(product.images)" :alt="product.name" class="h-full w-full" :class="hasCatalogImage(product.images) ? 'object-cover' : 'object-contain'">
+          <img :src="catalogImageUrl(product.images)" :alt="product.name" class="h-full w-full" :class="hasCatalogImage(product.images) ? 'object-cover' : 'object-contain'" @error="applyCatalogImageFallback">
         </div>
         <div class="self-center">
           <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-glam-gold">{{ product.brand?.name || 'Glamrush edit' }}</p>

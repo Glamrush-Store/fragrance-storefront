@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PRODUCT_IMAGE_FALLBACK } from '~/utils/catalog'
+import { applyCatalogImageFallback, PRODUCT_IMAGE_FALLBACK } from '~/utils/catalog'
 
 const props = defineProps<{ images: string[]; productName: string }>()
 
@@ -34,14 +34,14 @@ watch(() => props.images, () => { activeIndex.value = 0 }, { deep: true })
   >
     <div v-if="hasMultipleImages" class="order-2 flex gap-2 overflow-x-auto pb-1 sm:order-1 sm:max-h-[640px] sm:flex-col sm:overflow-y-auto sm:pb-0" aria-label="Choose product image">
       <button v-for="(image, index) in displayImages" :key="`${image}-${index}`" type="button" class="size-16 shrink-0 overflow-hidden border bg-neutral-100 transition sm:size-[68px]" :class="index === activeIndex ? 'border-neutral-950' : 'border-transparent opacity-70 hover:border-neutral-400 hover:opacity-100'" :aria-label="`View image ${index + 1} of ${displayImages.length}`" :aria-current="index === activeIndex ? 'true' : undefined" @click="activeIndex = index">
-        <img :src="image" :alt="`${productName}, view ${index + 1}`" class="h-full w-full object-cover" width="152" height="152">
+        <img :src="image" :alt="`${productName}, view ${index + 1}`" class="h-full w-full object-cover" width="152" height="152" @error="applyCatalogImageFallback">
       </button>
     </div>
 
     <div class="group relative order-1 aspect-[4/5] min-h-0 overflow-hidden bg-neutral-100 sm:order-2">
       <button type="button" class="h-full w-full cursor-zoom-in" :aria-label="`Zoom ${productName}, image ${activeIndex + 1}`" @click="zoomOpen = true">
         <Transition name="gallery-image" mode="out-in">
-          <img :key="activeImage" :src="activeImage" :alt="`${productName}, image ${activeIndex + 1} of ${displayImages.length}`" class="h-full w-full transition-transform duration-700 group-hover:scale-[1.04]" :class="usingFallback ? 'object-contain' : 'object-cover'" width="1000" height="1250">
+          <img :key="activeImage" :src="activeImage" :alt="`${productName}, image ${activeIndex + 1} of ${displayImages.length}`" class="h-full w-full transition-transform duration-700 group-hover:scale-[1.04]" :class="usingFallback ? 'object-contain' : 'object-cover'" width="1000" height="1250" @error="applyCatalogImageFallback">
         </Transition>
       </button>
 
@@ -61,7 +61,7 @@ watch(() => props.images, () => { activeIndex.value = 0 }, { deep: true })
     <UModal v-model:open="zoomOpen" :title="productName" fullscreen>
       <template #body>
         <div class="flex h-full min-h-[70vh] items-center justify-center bg-neutral-100 p-4 sm:p-8">
-          <img :src="activeImage" :alt="productName" class="max-h-[85vh] max-w-full object-contain" width="1800" height="2200">
+          <img :src="activeImage" :alt="productName" class="max-h-[85vh] max-w-full object-contain" width="1800" height="2200" @error="applyCatalogImageFallback">
         </div>
       </template>
     </UModal>
