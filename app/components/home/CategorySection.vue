@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Category, HomepageSection } from '~/types/catalog'
+import { applyCatalogImageFallback } from '~/utils/catalog'
 
 const props = defineProps<{ section: HomepageSection }>()
 const categories = computed(() => props.section.items.filter((item): item is Category => !('price' in item)))
@@ -20,7 +21,7 @@ const fallbacks = [
       </div>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <NuxtLink v-for="(category, index) in categories" :key="category.id" :to="`/category/${category.slug}`" class="group relative aspect-[4/3] overflow-hidden bg-neutral-100">
-          <img :src="catalogImageUrl(category.images, fallbacks[index % fallbacks.length])" :alt="category.name" class="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" width="800" height="600">
+          <img :src="catalogImageUrl(category.images, fallbacks[index % fallbacks.length])" :alt="category.name" class="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" width="800" height="600" @error="applyCatalogImageFallback($event, fallbacks[index % fallbacks.length])">
           <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
           <div class="absolute inset-x-0 bottom-0 flex items-end justify-between p-5 text-white sm:p-6">
             <div><h3 class="font-display text-2xl">{{ category.name }}</h3><p v-if="category.product_count !== undefined" class="mt-1 text-xs text-white/70">{{ category.product_count }} products</p></div>

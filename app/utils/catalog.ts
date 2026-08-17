@@ -22,6 +22,14 @@ export const catalogImageUrl = (images: CatalogImages, fallback = PRODUCT_IMAGE_
 
 export const hasCatalogImage = (images: CatalogImages): boolean => catalogImageUrls(images).length > 0
 
+export const applyCatalogImageFallback = (event: Event, fallback = PRODUCT_IMAGE_FALLBACK): void => {
+  const image = event.currentTarget as HTMLImageElement | null
+  if (!image || image.dataset.fallbackApplied === 'true') return
+
+  image.dataset.fallbackApplied = 'true'
+  image.src = fallback
+}
+
 /**
  * Prefer the explicit many-to-many primary category while remaining compatible
  * with responses produced before the category pivot rollout.
