@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Product, ProductPrice, ProductVariant } from '~/types/catalog'
+import { applyCatalogImageFallback } from '~/utils/catalog'
 
 const props = withDefaults(defineProps<{
   product: Product
@@ -61,7 +62,7 @@ const confirm = () => {
     :label="product.available === false ? 'Sold out' : 'Quick add'"
     color="neutral"
     block
-    :class="buttonClass"
+    :class="[buttonClass, product.available === false ? 'cursor-not-allowed' : 'cursor-pointer']"
     :disabled="product.available === false"
     @click="openPicker"
   />
@@ -76,7 +77,7 @@ const confirm = () => {
     <template #body>
       <div class="grid grid-cols-[84px_1fr] gap-4 bg-[#f7f3ec] px-6 py-5">
         <div class="aspect-[4/5] overflow-hidden bg-white">
-          <img :src="catalogImageUrl(product.images)" :alt="product.name" class="h-full w-full object-cover">
+          <img :src="catalogImageUrl(product.images)" :alt="product.name" class="h-full w-full" :class="hasCatalogImage(product.images) ? 'object-cover' : 'object-contain'" @error="applyCatalogImageFallback">
         </div>
         <div class="self-center">
           <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-glam-gold">{{ product.brand?.name || 'Glamrush edit' }}</p>
@@ -93,7 +94,7 @@ const confirm = () => {
             :key="variant.id"
             type="button"
             class="flex min-h-14 items-center justify-between gap-4 border px-4 py-3 text-left transition"
-            :class="variant.id === selectedId ? 'border-neutral-950 bg-neutral-950 text-white' : 'border-neutral-300 bg-white hover:border-neutral-950 disabled:cursor-not-allowed disabled:opacity-40'"
+            :class="variant.id === selectedId ? 'border-neutral-950 bg-neutral-950 !text-white [&_*]:!text-white' : 'border-neutral-300 bg-white hover:border-neutral-950 disabled:cursor-not-allowed disabled:opacity-40'"
             :disabled="variant.available === false || variant.inStock === false"
             :aria-pressed="variant.id === selectedId"
             @click="selectedId = variant.id"

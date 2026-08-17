@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SavedItem } from '~/types/account'
+import { applyCatalogImageFallback, PRODUCT_IMAGE_FALLBACK } from '~/utils/catalog'
 
 const { listSavedItems, removeSavedItem } = useCustomerAccount()
 const items = ref<SavedItem[]>([])
@@ -40,7 +41,7 @@ onMounted(load)
     <div v-else-if="items.length" class="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
       <article v-for="item in items" :key="item.id" class="group min-w-0">
         <div class="relative aspect-[4/5] overflow-hidden bg-[#eee9e1]">
-          <NuxtLink :to="`/product/${item.slug}`" class="block h-full"><img v-if="item.thumb" :src="item.thumb" :alt="item.name" class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"><div v-else class="flex h-full items-center justify-center"><span class="font-display text-5xl text-neutral-300">G</span></div></NuxtLink>
+          <NuxtLink :to="`/product/${item.slug}`" class="block h-full"><img :src="item.thumb || PRODUCT_IMAGE_FALLBACK" :alt="item.name" class="h-full w-full transition duration-500 group-hover:scale-[1.025]" :class="item.thumb ? 'object-cover' : 'object-contain'" @error="applyCatalogImageFallback"></NuxtLink>
           <UButton icon="i-lucide-x" :aria-label="`Remove ${item.name} from wishlist`" color="neutral" variant="soft" square class="absolute right-3 top-3 rounded-full bg-white/90" :loading="removingId === item.product_id" @click="remove(item)" />
         </div>
         <p class="mt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-glam-gold">Saved fragrance</p>

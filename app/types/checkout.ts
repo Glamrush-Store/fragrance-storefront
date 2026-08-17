@@ -81,6 +81,50 @@ export interface PaymentInitialization {
   reference: string
   provider: string
   status: string
+  next_actions?: {
+    retry_payment?: boolean
+    restore_cart?: boolean
+    retry_endpoint?: string
+  }
+}
+
+export interface RestoredOrderCartItem {
+  product_id: string
+  product_variant_id: string | null
+  name: string
+  quantity: number
+  unit_price: number | string
+  old_unit_price?: number | string | null
+  new_unit_price?: number | string | null
+}
+
+export interface SkippedOrderCartItem {
+  product_id: string | null
+  product_variant_id: string | null
+  name: string
+  reason: string
+  message: string
+  requested_quantity?: number
+  available_quantity?: number | null
+}
+
+export interface OrderCartPriceChange {
+  product_id: string
+  product_variant_id: string | null
+  name: string
+  old_unit_price: number | string
+  new_unit_price: number | string
+}
+
+export interface OrderRestoreCartResult {
+  order: { id: string; order_number: string; status: string }
+  cart_token: string | null
+  restored_count: number
+  skipped_count: number
+  restored_items: RestoredOrderCartItem[]
+  skipped_items: SkippedOrderCartItem[]
+  price_changes: OrderCartPriceChange[]
+  next_action: 'checkout' | 'browse_catalog'
 }
 
 export interface DiscountQuote {

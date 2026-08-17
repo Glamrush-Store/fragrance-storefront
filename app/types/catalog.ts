@@ -15,6 +15,8 @@ export interface Category {
   product_count?: number
 }
 
+export type ProductCategory = Pick<Category, 'id' | 'name' | 'slug'>
+
 export interface Product {
   id: string | number
   name: string
@@ -33,7 +35,10 @@ export interface Product {
   is_featured?: boolean
   available?: boolean
   images?: string | MediaImage | Array<string | MediaImage> | null
-  category?: { name: string; slug: string } | null
+  /** Legacy alias for the primary category. */
+  category?: ProductCategory | null
+  primary_category?: ProductCategory | null
+  categories?: ProductCategory[]
   brand?: { name: string; slug: string } | null
   variants?: ProductVariant[]
   default_attributes?: ProductAttribute[]

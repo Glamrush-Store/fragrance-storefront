@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyCatalogImageFallback, PRODUCT_IMAGE_FALLBACK } from '~/utils/catalog'
 import type { CustomerAddress } from '~/types/account'
 import type { CartItem, CheckoutAddress, DiscountQuote, PaymentMethod, ShippingOption } from '~/types/checkout'
 
@@ -6,7 +7,7 @@ const router = useRouter()
 const toast = useToast()
 const { user, ensureSession } = useAuth()
 const { listAddresses } = useCustomerAccount()
-const { items, subtotal, count, loading: cartLoading, quantityQueuedIds, quantitySavingIds, ensureCart, queueItemQuantity, removeItem, clearCart } = useCart()
+const { cartToken, items, subtotal, count, loading: cartLoading, quantityQueuedIds, quantitySavingIds, ensureCart, queueItemQuantity, removeItem, clearCart } = useCart()
 const { getShippingOptions, getPaymentMethods, validateDiscount, createOrder, initializePayment } = useCheckout()
 
 const addresses = ref<CustomerAddress[]>([])
@@ -56,7 +57,7 @@ const restoreCheckoutAttempt = () => {
   catch { sessionStorage.removeItem(checkoutAttemptStorageKey) }
 }
 
-const blankAddress = (): CheckoutAddress => ({ full_name: '', email: '', phone: '', country: 'Nigeria', state: '', city: '', postal_code: '', line1: '', line2: '' })
+const blankAddress = (): CheckoutAddress => ({ full_name: '', email: '', phone: '', country: 'NGA', state: '', city: '', postal_code: '', line1: '', line2: '' })
 const shipping = reactive<CheckoutAddress>(blankAddress())
 const billing = reactive<CheckoutAddress>(blankAddress())
 
@@ -140,6 +141,17 @@ watch(() => shipping.email, (email, previousEmail) => {
     checkoutIdempotencyKey.value = ''
   }
 })
+
+watch(
+  () => [shipping.country, shipping.state, shipping.city] as const,
+  (location, previousLocation) => {
+    if (!previousLocation || location.every((value, index) => value === previousLocation[index])) return
+    selectedRateId.value = ''
+    shippingOptions.value = []
+    quoteMessage.value = ''
+    checkoutIdempotencyKey.value = ''
+  },
+)
 
 const changeItemQuantity = (item: CartItem, quantity: number) => {
   if (quantity < 1 || pendingOrder.value || pendingItemIds.value.has(item.id) || quantitySavingIds.value[item.id]) return
@@ -230,7 +242,7 @@ const submitOrder = async () => {
     const payment = paymentResponse.data
 
     if (import.meta.client) {
-      sessionStorage.setItem('glamrush_pending_payment', JSON.stringify({ orderId: order.id, orderNumber: order.order_number, provider: payment.provider, reference: payment.reference }))
+      sessionStorage.setItem('glamrush_pending_payment', JSON.stringify({ orderId: order.id, orderNumber: order.order_number, provider: payment.provider, reference: payment.reference, paymentMethod: selectedPaymentCode.value, cartToken: cartToken.value }))
       sessionStorage.removeItem(checkoutAttemptStorageKey)
     }
     await clearCart()
@@ -303,10 +315,8 @@ useSeoMeta({ title: 'Checkout — Glamrush', description: 'Securely complete you
                 <label class="block"><span class="mb-2 block text-xs font-semibold">Phone</span><UInput v-model="shipping.phone" type="tel" autocomplete="tel" class="w-full" required /></label>
                 <label class="block sm:col-span-2"><span class="mb-2 block text-xs font-semibold">Address line 1</span><UInput v-model="shipping.line1" autocomplete="address-line1" class="w-full" required /></label>
                 <label class="block sm:col-span-2"><span class="mb-2 block text-xs font-semibold">Address line 2 <span class="font-normal text-neutral-400">(optional)</span></span><UInput v-model="shipping.line2" autocomplete="address-line2" class="w-full" /></label>
-                <label class="block"><span class="mb-2 block text-xs font-semibold">City</span><UInput v-model="shipping.city" autocomplete="address-level2" class="w-full" required /></label>
-                <label class="block"><span class="mb-2 block text-xs font-semibold">State</span><UInput v-model="shipping.state" autocomplete="address-level1" class="w-full" required /></label>
+                <AddressLocationFields v-model:country="shipping.country" v-model:state="shipping.state" v-model:city="shipping.city" />
                 <label class="block"><span class="mb-2 block text-xs font-semibold">Postal code</span><UInput v-model="shipping.postal_code" autocomplete="postal-code" class="w-full" /></label>
-                <label class="block"><span class="mb-2 block text-xs font-semibold">Country</span><UInput v-model="shipping.country" autocomplete="country-name" class="w-full" required /></label>
               </div>
             </div>
           </section>
@@ -332,7 +342,7 @@ useSeoMeta({ title: 'Checkout — Glamrush', description: 'Securely complete you
 
               <label class="mt-7 flex cursor-pointer items-center gap-3 border-t border-neutral-100 pt-6 text-sm"><input v-model="sameBilling" type="checkbox" class="size-4 accent-neutral-950"> Billing address is the same as shipping</label>
               <div v-if="!sameBilling" class="mt-6 grid gap-5 border-t border-neutral-100 pt-6 sm:grid-cols-2">
-                <label class="block sm:col-span-2"><span class="mb-2 block text-xs font-semibold">Full name</span><UInput v-model="billing.full_name" class="w-full" required /></label><label class="block"><span class="mb-2 block text-xs font-semibold">Email</span><UInput v-model="billing.email" type="email" class="w-full" required /></label><label class="block"><span class="mb-2 block text-xs font-semibold">Phone</span><UInput v-model="billing.phone" type="tel" class="w-full" required /></label><label class="block sm:col-span-2"><span class="mb-2 block text-xs font-semibold">Address line 1</span><UInput v-model="billing.line1" class="w-full" required /></label><label class="block sm:col-span-2"><span class="mb-2 block text-xs font-semibold">Address line 2</span><UInput v-model="billing.line2" class="w-full" /></label><label class="block"><span class="mb-2 block text-xs font-semibold">City</span><UInput v-model="billing.city" class="w-full" required /></label><label class="block"><span class="mb-2 block text-xs font-semibold">State</span><UInput v-model="billing.state" class="w-full" required /></label><label class="block"><span class="mb-2 block text-xs font-semibold">Postal code</span><UInput v-model="billing.postal_code" class="w-full" /></label><label class="block"><span class="mb-2 block text-xs font-semibold">Country</span><UInput v-model="billing.country" class="w-full" required /></label>
+                <label class="block sm:col-span-2"><span class="mb-2 block text-xs font-semibold">Full name</span><UInput v-model="billing.full_name" class="w-full" required /></label><label class="block"><span class="mb-2 block text-xs font-semibold">Email</span><UInput v-model="billing.email" type="email" class="w-full" required /></label><label class="block"><span class="mb-2 block text-xs font-semibold">Phone</span><UInput v-model="billing.phone" type="tel" class="w-full" required /></label><label class="block sm:col-span-2"><span class="mb-2 block text-xs font-semibold">Address line 1</span><UInput v-model="billing.line1" class="w-full" required /></label><label class="block sm:col-span-2"><span class="mb-2 block text-xs font-semibold">Address line 2</span><UInput v-model="billing.line2" class="w-full" /></label><AddressLocationFields v-model:country="billing.country" v-model:state="billing.state" v-model:city="billing.city" /><label class="block"><span class="mb-2 block text-xs font-semibold">Postal code</span><UInput v-model="billing.postal_code" class="w-full" /></label>
               </div>
             </div>
           </section>
@@ -343,7 +353,7 @@ useSeoMeta({ title: 'Checkout — Glamrush', description: 'Securely complete you
           <p v-if="pendingOrder" class="border-b border-amber-200 bg-amber-50 px-6 py-3 text-xs leading-5 text-amber-900">Your order has already been created. Bag editing is paused while you retry payment.</p>
           <div class="max-h-[30rem] divide-y divide-neutral-100 overflow-auto px-6">
             <div v-for="item in items" :key="item.id" class="grid grid-cols-[68px_minmax(0,1fr)] gap-4 py-5 transition-opacity" :class="pendingItemIds.has(item.id) || quantitySavingIds[item.id] ? 'pointer-events-none opacity-50' : ''">
-              <NuxtLink :to="`/product/${item.slug}`" class="aspect-[4/5] overflow-hidden bg-[#eee9e1]"><img v-if="item.thumb" :src="item.thumb" :alt="item.name" class="h-full w-full object-cover"><span v-else class="grid h-full place-items-center font-display text-2xl text-neutral-300">G</span></NuxtLink>
+              <NuxtLink :to="`/product/${item.slug}`" class="aspect-[4/5] overflow-hidden bg-[#eee9e1]"><img :src="item.thumb || PRODUCT_IMAGE_FALLBACK" :alt="item.name" class="h-full w-full" :class="item.thumb ? 'object-cover' : 'object-contain'" @error="applyCatalogImageFallback"></NuxtLink>
               <div class="min-w-0">
                 <div class="flex items-start justify-between gap-3"><div class="min-w-0"><NuxtLink :to="`/product/${item.slug}`" class="line-clamp-2 text-sm font-medium leading-5 hover:underline">{{ item.name }}</NuxtLink><p v-if="itemDetails(item)" class="mt-1 truncate text-[10px] uppercase tracking-[0.1em] text-neutral-400">{{ itemDetails(item) }}</p></div><p class="shrink-0 text-sm font-semibold">{{ formatMoney(Number(item.unit_price) * item.quantity) }}</p></div>
                 <div class="mt-4 flex items-center justify-between gap-3">

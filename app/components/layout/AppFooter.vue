@@ -60,7 +60,7 @@ const joinNewsletter = async () => {
               label="Join us"
               trailing-icon="i-lucide-arrow-right"
               color="neutral"
-              class="justify-center rounded-none px-5"
+              class="justify-center rounded-none px-5 !text-white"
               :loading="submitting"
               :disabled="submitting"
             />
@@ -83,7 +83,7 @@ const joinNewsletter = async () => {
           <NuxtLink to="/privacy-policy">Privacy</NuxtLink>
           <NuxtLink to="/terms-and-conditions">Terms</NuxtLink>
         </nav>
-        <p>© {{ new Date().getFullYear() }} Glamrush</p>
+        <p>Â© {{ new Date().getFullYear() }} Glamrush</p>
       </div>
     </div>
   </footer>

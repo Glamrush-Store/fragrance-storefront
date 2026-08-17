@@ -19,7 +19,7 @@ const eyebrow = computed(() => ({
 }[props.section.type] || 'The fragrance edit'))
 const browseTo = computed(() => {
   if (isSale.value) return { path: `/category/${props.storefrontSlug}`, query: { sale: 'true' } }
-  const category = products.value[0]?.category?.slug
+  const category = productPrimaryCategory(products.value[0])?.slug
   return { path: `/category/${category || props.storefrontSlug}` }
 })
 </script>

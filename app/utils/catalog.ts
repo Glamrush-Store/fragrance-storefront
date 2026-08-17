@@ -1,6 +1,8 @@
-import type { Category, MediaImage, Product } from '~/types/catalog'
+import type { Category, MediaImage, Product, ProductCategory } from '~/types/catalog'
 
 type CatalogImages = Product['images'] | Category['images']
+
+export const PRODUCT_IMAGE_FALLBACK = '/images/product-placeholder.png'
 
 const mediaUrl = (image: string | MediaImage | undefined | null): string | undefined => {
   if (!image) return undefined
@@ -13,10 +15,27 @@ export const catalogImageUrls = (images: CatalogImages): string[] => {
   return source.map(mediaUrl).filter((url): url is string => Boolean(url))
 }
 
-export const catalogImageUrl = (images: CatalogImages, fallback = '/favicon.ico'): string => {
+export const catalogImageUrl = (images: CatalogImages, fallback = PRODUCT_IMAGE_FALLBACK): string => {
   if (Array.isArray(images)) return mediaUrl(images[0]) || fallback
   return mediaUrl(images) || fallback
 }
+
+export const hasCatalogImage = (images: CatalogImages): boolean => catalogImageUrls(images).length > 0
+
+export const applyCatalogImageFallback = (event: Event, fallback = PRODUCT_IMAGE_FALLBACK): void => {
+  const image = event.currentTarget as HTMLImageElement | null
+  if (!image || image.dataset.fallbackApplied === 'true') return
+
+  image.dataset.fallbackApplied = 'true'
+  image.src = fallback
+}
+
+/**
+ * Prefer the explicit many-to-many primary category while remaining compatible
+ * with responses produced before the category pivot rollout.
+ */
+export const productPrimaryCategory = (product?: Product | null): ProductCategory | undefined =>
+  product?.primary_category ?? product?.category ?? product?.categories?.[0]
 
 export const facetLabel = (type: string): string => type
   .split('_')
