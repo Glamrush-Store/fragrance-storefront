@@ -1,5 +1,6 @@
 <script setup lang="ts">
 withDefaults(defineProps<{ bagCount?: number }>(), { bagCount: 0 })
+const emit = defineEmits<{ 'height-change': [height: number] }>()
 
 const config = useRuntimeConfig()
 const router = useRouter()
@@ -10,6 +11,9 @@ const { user, ensureSession, logout } = useAuth()
 const { ensureCart } = useCart()
 const { getConfiguration } = useStorefront()
 const loggingOut = ref(false)
+const announcementBar = useTemplateRef<HTMLElement>('announcementBar')
+const navigationHeader = useTemplateRef<HTMLElement>('navigationHeader')
+let headerResizeObserver: ResizeObserver | undefined
 
 const { data: configurationResponse } = await useAsyncData(
   'storefront-configuration',
@@ -19,6 +23,20 @@ const { data: configurationResponse } = await useAsyncData(
 const announcementPrimaryText = computed(() => configurationResponse.value?.data.announcement.primary_text?.trim() || '')
 const announcementSecondaryText = computed(() => configurationResponse.value?.data.announcement.secondary_text?.trim() || '')
 const hasAnnouncement = computed(() => Boolean(announcementPrimaryText.value || announcementSecondaryText.value))
+
+const reportHeaderHeight = () => {
+  const announcementHeight = announcementBar.value?.getBoundingClientRect().height ?? 0
+  const navigationHeight = navigationHeader.value?.getBoundingClientRect().height ?? 0
+  emit('height-change', Math.ceil(announcementHeight + navigationHeight))
+}
+
+const observeHeaderParts = () => {
+  headerResizeObserver?.disconnect()
+  headerResizeObserver = new ResizeObserver(reportHeaderHeight)
+  if (announcementBar.value) headerResizeObserver.observe(announcementBar.value)
+  if (navigationHeader.value) headerResizeObserver.observe(navigationHeader.value)
+  reportHeaderHeight()
+}
 
 const navigation = [
   { label: 'New in', to: '/#new' },
@@ -46,18 +64,23 @@ const signOut = async () => {
   }
 }
 
-onMounted(async () => {
-  await ensureSession()
-  await ensureCart().catch(() => undefined)
+onMounted(() => {
+  observeHeaderParts()
+
+  void ensureSession()
+  void ensureCart().catch(() => undefined)
 })
+
+watch(hasAnnouncement, () => nextTick(observeHeaderParts))
+onBeforeUnmount(() => headerResizeObserver?.disconnect())
 </script>
 
 <template>
-  <div v-if="hasAnnouncement" class="bg-neutral-950 px-4 py-2 text-center text-[10px] font-medium uppercase tracking-[0.16em] text-white sm:text-xs">
+  <div v-if="hasAnnouncement" ref="announcementBar" class="bg-neutral-950 px-4 py-2 text-center text-[10px] font-medium uppercase tracking-[0.16em] text-white sm:text-xs">
     <span v-if="announcementPrimaryText">{{ announcementPrimaryText }}</span><span v-if="announcementPrimaryText && announcementSecondaryText" class="mx-4 hidden text-glam-gold sm:inline">✦</span><span v-if="announcementSecondaryText" class="hidden sm:inline">{{ announcementSecondaryText }}</span>
   </div>
 
-    <header class="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
+    <header ref="navigationHeader" class="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
       <div class="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <UButton icon="i-lucide-menu" aria-label="Open menu" color="neutral" variant="ghost" square class="md:hidden" @click="menuOpen = true" />
         <NuxtLink to="/" class="font-display text-xl tracking-[0.12em]">GLAMRUSH</NuxtLink>
