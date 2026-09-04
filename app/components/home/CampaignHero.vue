@@ -6,43 +6,41 @@ const props = defineProps<{ campaign: StorefrontCampaign }>()
 const desktopImage = computed(() => props.campaign.desktop_image || props.campaign.mobile_image || null)
 const mobileImage = computed(() => props.campaign.mobile_image || desktopImage.value)
 const headingId = computed(() => `campaign-${props.campaign.id}`)
+const imageFailed = ref(false)
+const showImage = computed(() => Boolean(desktopImage.value) && !imageFailed.value)
+
+watch(desktopImage, () => { imageFailed.value = false })
 </script>
 
 <template>
-  <section id="new" :aria-labelledby="headingId" class="mx-auto grid min-h-[calc(100svh-97px)] max-w-[1440px] lg:grid-cols-[44%_56%]">
-    <div class="flex items-center px-6 py-16 sm:px-10 lg:px-16 xl:px-24">
-      <div class="campaign-copy max-w-xl">
-        <p v-if="campaign.eyebrow" class="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-glam-gold">{{ campaign.eyebrow }}</p>
-        <h1 :id="headingId" class="font-display text-[clamp(3.4rem,7vw,7.4rem)] leading-[0.88] tracking-[-0.045em]">{{ campaign.title }}</h1>
-        <p v-if="campaign.description" class="mt-8 max-w-md text-base leading-7 text-neutral-600">{{ campaign.description }}</p>
-        <UButton v-if="campaign.cta_label && campaign.cta_url" :to="campaign.cta_url" :label="campaign.cta_label" trailing-icon="i-lucide-arrow-up-right" color="neutral" size="lg" class="mt-8 rounded-none px-6 !text-white" />
+  <section id="new" :aria-labelledby="headingId" class="campaign-hero group relative isolate flex w-full overflow-hidden bg-[#391722] text-white">
+    <picture v-if="showImage" class="absolute inset-0 z-0 block h-full w-full overflow-hidden">
+      <source media="(max-width: 767px)" :srcset="mobileImage || undefined">
+      <img :src="desktopImage || undefined" :alt="campaign.title" class="h-full w-full object-cover transition duration-[1.4s] ease-out motion-safe:group-hover:scale-[1.025]" width="1920" height="1200" fetchpriority="high" @error="imageFailed = true">
+    </picture>
+
+    <div v-else class="campaign-art absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="campaign-orbit campaign-orbit--large" />
+        <span class="campaign-orbit campaign-orbit--small" />
       </div>
     </div>
 
-    <div class="campaign-art relative min-h-[58svh] overflow-hidden bg-[#391722] lg:min-h-0">
-      <picture v-if="desktopImage">
-        <source media="(max-width: 767px)" :srcset="mobileImage">
-        <img :src="desktopImage" :alt="campaign.title" class="h-full w-full object-cover transition duration-[1.4s] hover:scale-[1.025]" width="1100" height="1350" fetchpriority="high">
-      </picture>
+    <div class="absolute inset-0 z-10 bg-[linear-gradient(90deg,rgba(9,7,5,0.82)_0%,rgba(9,7,5,0.56)_38%,rgba(9,7,5,0.12)_68%,rgba(9,7,5,0.18)_100%)] max-md:bg-[linear-gradient(0deg,rgba(9,7,5,0.88)_0%,rgba(9,7,5,0.2)_68%,rgba(9,7,5,0.18)_100%)]" />
 
-      <div v-else class="absolute inset-0 isolate flex items-center justify-center overflow-hidden px-8 py-16 text-center text-white">
-        <span aria-hidden="true" class="campaign-orbit campaign-orbit--large" />
-        <span aria-hidden="true" class="campaign-orbit campaign-orbit--small" />
-        <div class="relative max-w-xl">
-          <p v-if="campaign.eyebrow" class="text-xs font-semibold uppercase tracking-[0.28em] text-[#d9b481]">{{ campaign.eyebrow }}</p>
-          <p class="mt-6 font-display text-[clamp(4rem,9vw,8rem)] leading-[0.84] tracking-[-0.05em]">{{ campaign.title }}</p>
-        </div>
-      </div>
-
-      <div v-if="desktopImage" class="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/60 to-transparent p-6 text-white sm:p-8">
-        <p v-if="campaign.eyebrow" class="max-w-[15rem] text-xs uppercase leading-5 tracking-[0.18em]">{{ campaign.eyebrow }}</p>
-        <span class="font-display text-6xl" aria-hidden="true">G</span>
+    <div class="relative z-20 flex w-full items-end px-6 py-14 sm:px-10 sm:py-20 md:items-center lg:px-[7vw]">
+      <div class="campaign-copy max-w-2xl">
+        <p v-if="campaign.eyebrow" class="mb-5 text-xs font-semibold uppercase tracking-[0.24em] text-[#e1ba82]">{{ campaign.eyebrow }}</p>
+        <h1 :id="headingId" class="font-display max-w-[11ch] text-[clamp(3.6rem,8vw,8.5rem)] leading-[0.84] tracking-[-0.05em] text-balance">{{ campaign.title }}</h1>
+        <p v-if="campaign.description" class="mt-7 max-w-md text-sm leading-7 text-white/80 sm:text-base">{{ campaign.description }}</p>
+        <UButton v-if="campaign.cta_label && campaign.cta_url" :to="campaign.cta_url" :label="campaign.cta_label" trailing-icon="i-lucide-arrow-up-right" color="neutral" size="lg" class="mt-8 rounded-none px-6 !bg-white !text-neutral-950 hover:!bg-[#e1ba82]" />
       </div>
     </div>
   </section>
 </template>
 
 <style scoped>
+.campaign-hero { min-height: max(36rem, calc(100dvh - var(--storefront-header-height, 65px))); }
 .campaign-copy { animation: campaign-reveal .8s cubic-bezier(.22, 1, .36, 1) both; }
 .campaign-art { background-image: radial-gradient(circle at 50% 42%, #753a4c 0, #391722 58%, #240c14 100%); }
 .campaign-orbit { position: absolute; border: 1px solid rgb(217 180 129 / 35%); border-radius: 9999px; }
