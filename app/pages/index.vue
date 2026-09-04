@@ -19,6 +19,7 @@ const sections = computed(() => [...(homepage.value?.sections ?? [])].sort((a, b
 const categorySections = computed(() => sections.value.filter(section => section.type === 'random_categories'))
 const merchandisingSections = computed(() => sections.value.filter(section => section.type !== 'random_categories'))
 const storefrontSlug = computed(() => homepage.value?.storefront.slug || String(config.public.storefrontSlug))
+const headerHeight = ref(65)
 
 const { addItem } = useCart()
 const notice = shallowRef('')
@@ -47,13 +48,13 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="min-h-screen bg-white font-sans text-glam-ink">
+  <div class="min-h-screen bg-white font-sans text-glam-ink" :style="{ '--storefront-header-height': `${headerHeight}px` }">
     <a href="#main" class="fixed left-4 top-[-60px] z-[100] bg-neutral-950 px-4 py-3 text-sm text-white focus:top-4">Skip to content</a>
-    <LayoutAppHeader />
+    <LayoutAppHeader @height-change="headerHeight = $event" />
 
     <main id="main">
       <template v-if="status === 'pending'">
-        <section class="mx-auto grid min-h-[calc(100svh-97px)] max-w-[1440px] lg:grid-cols-[44%_56%]" aria-label="Loading homepage">
+        <section class="homepage-hero-height grid w-full lg:grid-cols-[44%_56%]" aria-label="Loading homepage">
           <div class="flex items-center px-6 py-16 sm:px-10 lg:px-16 xl:px-24"><div class="w-full max-w-lg space-y-6"><USkeleton class="h-3 w-40" /><USkeleton class="h-20 w-full sm:h-32" /><USkeleton class="h-5 w-4/5" /><USkeleton class="h-12 w-44" /></div></div>
           <USkeleton class="min-h-[58svh] w-full rounded-none lg:min-h-0" />
         </section>
@@ -108,6 +109,7 @@ useSeoMeta({
 </template>
 
 <style scoped>
+.homepage-hero-height { min-height: max(36rem, calc(100dvh - var(--storefront-header-height, 65px))); }
 .home-marquee { animation: home-marquee 22s linear infinite; }
 @keyframes home-marquee { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .home-marquee { animation: none; } }
