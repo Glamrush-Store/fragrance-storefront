@@ -67,11 +67,17 @@ Configure:
 ```dotenv
 NUXT_PUBLIC_BACKEND_URL=http://localhost:8000
 NUXT_PUBLIC_API_BASE=http://localhost:8000/api/v1
+NUXT_PUBLIC_SITE_URL=http://localhost:3000
 NUXT_PUBLIC_STOREFRONT_SLUG=fragrances
+NUXT_PUBLIC_GOOGLE_ANALYTICS_ID=G-E3E3SKZEQ9
 NUXT_PUBLIC_GOOGLE_CLIENT_ID=
 ```
 
 `NUXT_PUBLIC_BACKEND_URL` is the Laravel origin used for `/sanctum/csrf-cookie`; `NUXT_PUBLIC_API_BASE` includes `/api/v1`. The Google client must belong to the same Google project configured by the Backend Service, and the Storefront origin must be an authorized JavaScript origin.
+
+`NUXT_PUBLIC_SITE_URL` is the canonical public storefront origin used by canonical tags, Open Graph metadata, `robots.txt`, JSON-LD, and the generated sitemap. Set it to the production HTTPS origin without a trailing slash when deploying.
+
+`NUXT_PUBLIC_GOOGLE_ANALYTICS_ID` controls the single global Google tag included in every storefront page.
 
 ### Run locally
 

@@ -70,7 +70,7 @@ const resendCode = async () => {
   await submitEmail()
 }
 
-useSeoMeta({ title: 'Reset password — Glamrush', description: 'Recover access to your Glamrush account.' })
+useSeoMeta({ title: 'Reset password — Glamrush', description: 'Recover access to your Glamrush account.', robots: 'noindex, nofollow' })
 </script>
 
 <template>

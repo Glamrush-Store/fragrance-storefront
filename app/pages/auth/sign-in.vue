@@ -54,7 +54,7 @@ onMounted(async () => {
   if (user.value) await finishAuthentication()
 })
 
-useSeoMeta({ title: 'Sign in — Glamrush', description: 'Sign in to your Glamrush account.' })
+useSeoMeta({ title: 'Sign in — Glamrush', description: 'Sign in to your Glamrush account.', robots: 'noindex, nofollow' })
 </script>
 
 <template>

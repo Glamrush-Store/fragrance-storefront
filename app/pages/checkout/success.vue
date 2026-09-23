@@ -5,7 +5,7 @@ const orderNumber = computed(() => typeof route.query.order === 'string' && rout
 const payOnDelivery = computed(() => route.query.payment === 'pending_on_delivery')
 
 onMounted(() => ensureSession())
-useSeoMeta({ title: 'Order confirmed — Glamrush', description: 'Your Glamrush order has been received.', robots: 'noindex' })
+useSeoMeta({ title: 'Order confirmed — Glamrush', description: 'Your Glamrush order has been received.', robots: 'noindex, nofollow' })
 </script>
 
 <template>
