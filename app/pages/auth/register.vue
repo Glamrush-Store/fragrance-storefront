@@ -55,7 +55,7 @@ const registerWithGoogle = async () => {
   }
 }
 
-useSeoMeta({ title: 'Create account — Glamrush', description: 'Create your Glamrush customer account.' })
+useSeoMeta({ title: 'Create account — Glamrush', description: 'Create your Glamrush customer account.', robots: 'noindex, nofollow' })
 </script>
 
 <template>

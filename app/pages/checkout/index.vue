@@ -279,7 +279,7 @@ onMounted(async () => {
   finally { loadingPage.value = false }
 })
 
-useSeoMeta({ title: 'Checkout — Glamrush', description: 'Securely complete your Glamrush order.' })
+useSeoMeta({ title: 'Checkout — Glamrush', description: 'Securely complete your Glamrush order.', robots: 'noindex, nofollow' })
 </script>
 
 <template>

@@ -15,6 +15,8 @@ const fallbackPage: PublicContentPage = {
 }
 const page = computed(() => pageResponse.value?.data || fallbackPage)
 const settings = computed(() => page.value.settings || {})
+const { absoluteUrl, canonicalUrl } = useSiteSeo()
+const pageDescription = computed(() => page.value.meta_description || page.value.excerpt || 'Contact the Glamrush concierge.')
 const submitting = ref(false)
 const errorMessage = ref('')
 const reference = ref('')
@@ -68,8 +70,32 @@ onMounted(async () => {
 
 useSeoMeta({
   title: () => `${page.value.meta_title || page.value.title} — Glamrush`,
-  description: () => page.value.meta_description || page.value.excerpt || 'Contact the Glamrush concierge.',
+  description: () => pageDescription.value,
+  ogTitle: () => page.value.meta_title || page.value.title,
+  ogDescription: () => pageDescription.value,
+  ogUrl: () => canonicalUrl.value,
 })
+
+useJsonLd('contact-page-schema', () => ({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'ContactPage',
+      '@id': `${canonicalUrl.value}#webpage`,
+      'url': canonicalUrl.value,
+      'name': page.value.title,
+      'description': pageDescription.value,
+      'isPartOf': { '@id': `${absoluteUrl('/')}#website` },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      'itemListElement': [
+        { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': absoluteUrl('/') },
+        { '@type': 'ListItem', 'position': 2, 'name': 'Contact', 'item': canonicalUrl.value },
+      ],
+    },
+  ],
+}))
 </script>
 
 <template>
