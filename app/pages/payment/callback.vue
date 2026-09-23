@@ -134,7 +134,7 @@ onMounted(async () => {
   await validatePayment()
 })
 
-useSeoMeta({ title: 'Payment confirmation - Glamrush', description: 'Verify your Glamrush payment and view your receipt.', robots: 'noindex' })
+useSeoMeta({ title: 'Payment confirmation - Glamrush', description: 'Verify your Glamrush payment and view your receipt.', robots: 'noindex, nofollow' })
 </script>
 
 <template>

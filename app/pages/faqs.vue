@@ -18,6 +18,7 @@ const { data: response, status, error, refresh } = await useAsyncData(
 
 const groups = computed(() => response.value?.data || [])
 const meta = computed(() => response.value?.meta)
+const { absoluteUrl, canonicalUrl } = useSiteSeo()
 
 watch(groups, (value) => {
   if (!category.value && !search.value && value.length) {
@@ -52,7 +53,33 @@ const changePage = (nextPage: number) => {
 useSeoMeta({
   title: 'Frequently asked questions — Glamrush',
   description: 'Answers about Glamrush fragrances, orders, delivery, payments and returns.',
+  robots: () => search.value || category.value ? 'noindex, follow' : 'index, follow',
+  ogTitle: 'Frequently asked questions — Glamrush',
+  ogDescription: 'Answers about Glamrush fragrances, orders, delivery, payments and returns.',
+  ogUrl: () => canonicalUrl.value,
 })
+
+useJsonLd('faq-schema', () => ({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'FAQPage',
+      '@id': `${canonicalUrl.value}#faq`,
+      'mainEntity': groups.value.flatMap(group => group.faqs.map(faq => ({
+        '@type': 'Question',
+        'name': faq.question,
+        'acceptedAnswer': { '@type': 'Answer', 'text': seoPlainText(faq.answer) },
+      }))),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      'itemListElement': [
+        { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': absoluteUrl('/') },
+        { '@type': 'ListItem', 'position': 2, 'name': 'Frequently asked questions', 'item': canonicalUrl.value },
+      ],
+    },
+  ],
+}))
 </script>
 
 <template>

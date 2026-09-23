@@ -22,6 +22,17 @@ const { data: productResponse, status, error, refresh } = await useAsyncData(
 )
 
 const product = computed(() => productResponse.value?.data)
+
+if (error.value) {
+  const statusCode = (error.value as { status?: number; statusCode?: number }).status
+    ?? (error.value as { status?: number; statusCode?: number }).statusCode
+    ?? 500
+  throw createError({
+    statusCode: statusCode === 404 ? 404 : 503,
+    statusMessage: statusCode === 404 ? 'Product not found' : 'Product temporarily unavailable',
+  })
+}
+
 const primaryCategory = computed(() => productPrimaryCategory(product.value))
 const productCategories = computed(() => {
   if (!product.value) return []
@@ -125,13 +136,58 @@ const addToBag = async () => {
 
 onMounted(() => ensureCart().catch(() => undefined))
 
+const { absoluteUrl, canonicalUrl } = useSiteSeo()
+const seoDescription = computed(() => product.value?.metaDescription || product.value?.shortDescription || `Shop ${product.value?.name || 'fragrance'} at Glamrush.`)
+const seoCurrency = computed(() => {
+  const price = displayProduct.value?.price
+  return typeof price === 'object' && price.currency ? price.currency : 'NGN'
+})
+
 useSeoMeta({
   title: () => product.value?.metaTitle || (product.value ? `${product.value.name} — Glamrush` : 'Product — Glamrush'),
   description: () => product.value?.metaDescription || product.value?.shortDescription || `Shop ${product.value?.name || 'fragrance'} at Glamrush.`,
   ogTitle: () => product.value?.name,
-  ogDescription: () => product.value?.shortDescription || product.value?.metaDescription || undefined,
+  ogDescription: () => seoDescription.value,
   ogImage: () => images.value[0],
+  ogType: 'website',
+  ogUrl: () => canonicalUrl.value,
+  twitterTitle: () => product.value?.name,
+  twitterDescription: () => seoDescription.value,
+  twitterImage: () => images.value[0],
 })
+
+useJsonLd('product-schema', () => product.value ? {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Product',
+      '@id': `${canonicalUrl.value}#product`,
+      'name': product.value.name,
+      'description': seoPlainText(product.value.description || seoDescription.value),
+      'url': canonicalUrl.value,
+      'image': images.value.map(image => absoluteUrl(image)),
+      'sku': sku.value || undefined,
+      'brand': product.value.brand?.name ? { '@type': 'Brand', 'name': product.value.brand.name } : undefined,
+      'category': primaryCategory.value?.name,
+      'offers': {
+        '@type': 'Offer',
+        'url': canonicalUrl.value,
+        'price': productPricing(displayProduct.value || product.value).current.toFixed(2),
+        'priceCurrency': seoCurrency.value,
+        'availability': available.value ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        'itemCondition': 'https://schema.org/NewCondition',
+      },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      'itemListElement': [
+        { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': absoluteUrl('/') },
+        ...(primaryCategory.value ? [{ '@type': 'ListItem', 'position': 2, 'name': primaryCategory.value.name, 'item': absoluteUrl(`/category/${primaryCategory.value.slug}`) }] : []),
+        { '@type': 'ListItem', 'position': primaryCategory.value ? 3 : 2, 'name': product.value.name, 'item': canonicalUrl.value },
+      ],
+    },
+  ],
+} : null)
 </script>
 
 <template>

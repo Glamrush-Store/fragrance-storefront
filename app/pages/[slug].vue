@@ -27,13 +27,42 @@ const page = computed(() => response.value?.data)
 const updatedLabel = computed(() => page.value?.updated_at
   ? new Intl.DateTimeFormat('en-NG', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(page.value.updated_at))
   : null)
+const { absoluteUrl, canonicalUrl } = useSiteSeo()
+const pageDescription = computed(() => page.value?.meta_description || page.value?.excerpt || 'Information from Glamrush.')
 
 useSeoMeta({
   title: () => `${page.value?.meta_title || page.value?.title || 'Glamrush'} — Glamrush`,
-  description: () => page.value?.meta_description || page.value?.excerpt || 'Information from Glamrush.',
+  description: () => pageDescription.value,
   ogTitle: () => page.value?.meta_title || page.value?.title,
-  ogDescription: () => page.value?.meta_description || page.value?.excerpt || undefined,
+  ogDescription: () => pageDescription.value,
+  ogUrl: () => canonicalUrl.value,
+  twitterTitle: () => page.value?.meta_title || page.value?.title,
+  twitterDescription: () => pageDescription.value,
 })
+
+useJsonLd('content-page-schema', () => page.value ? {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebPage',
+      '@id': `${canonicalUrl.value}#webpage`,
+      'url': canonicalUrl.value,
+      'name': page.value.title,
+      'description': pageDescription.value,
+      'datePublished': page.value.published_at || undefined,
+      'dateModified': page.value.updated_at || page.value.published_at || undefined,
+      'isPartOf': { '@id': `${absoluteUrl('/')}#website` },
+      'publisher': { '@id': `${absoluteUrl('/')}#organization` },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      'itemListElement': [
+        { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': absoluteUrl('/') },
+        { '@type': 'ListItem', 'position': 2, 'name': page.value.title, 'item': canonicalUrl.value },
+      ],
+    },
+  ],
+} : null)
 </script>
 
 <template>

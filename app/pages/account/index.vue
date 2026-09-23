@@ -19,7 +19,7 @@ const signOut = async () => {
 
 const initials = computed(() => user.value?.name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase()).join('') || 'GR')
 
-useSeoMeta({ title: 'My account — Glamrush', description: 'Manage your Glamrush account.' })
+useSeoMeta({ title: 'My account — Glamrush', description: 'Manage your Glamrush account.', robots: 'noindex, nofollow' })
 </script>
 
 <template>

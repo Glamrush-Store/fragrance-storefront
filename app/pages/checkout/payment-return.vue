@@ -92,7 +92,7 @@ onMounted(async () => {
   }
 })
 
-useSeoMeta({ title: 'Verifying payment - Glamrush', robots: 'noindex' })
+useSeoMeta({ title: 'Verifying payment - Glamrush', robots: 'noindex, nofollow' })
 </script>
 
 <template>

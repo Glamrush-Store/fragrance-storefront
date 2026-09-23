@@ -19,6 +19,7 @@ const sections = computed(() => [...(homepage.value?.sections ?? [])].sort((a, b
 const categorySections = computed(() => sections.value.filter(section => section.type === 'random_categories'))
 const merchandisingSections = computed(() => sections.value.filter(section => section.type !== 'random_categories'))
 const storefrontSlug = computed(() => homepage.value?.storefront.slug || String(config.public.storefrontSlug))
+const { canonicalUrl } = useSiteSeo()
 const headerHeight = ref(65)
 
 const { addItem } = useCart()
@@ -44,7 +45,21 @@ useSeoMeta({
   ogTitle: () => campaign.value?.title || 'Glamrush — Fragrance that stays with you',
   ogDescription: () => campaign.value?.description || 'A considered edit of unforgettable scents, from skin-close oils to room-filling perfume.',
   ogImage: () => campaign.value?.desktop_image || undefined,
+  ogUrl: () => canonicalUrl.value,
+  twitterTitle: () => campaign.value?.title || 'Glamrush — Fragrance that stays with you',
+  twitterDescription: () => campaign.value?.description || 'A considered edit of unforgettable scents, from skin-close oils to room-filling perfume.',
+  twitterImage: () => campaign.value?.desktop_image || undefined,
 })
+
+useJsonLd('homepage-schema', () => ({
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  '@id': `${canonicalUrl.value}#webpage`,
+  'url': canonicalUrl.value,
+  'name': campaign.value?.title || 'Glamrush — Fragrance that stays with you',
+  'description': campaign.value?.description || 'Discover perfumes, fragrance oils, body sprays and home scents curated for every mood and memory.',
+  'isPartOf': { '@id': `${canonicalUrl.value}#website` },
+}))
 </script>
 
 <template>

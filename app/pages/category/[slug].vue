@@ -87,6 +87,11 @@ const findCategory = (categories: Category[], targetSlug: string): Category | un
 }
 
 const selectedCategory = computed(() => findCategory(categoryResponse.value?.data ?? [], slug.value))
+
+if (categoryResponse.value && !selectedCategory.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Category not found' })
+}
+
 const categoryName = computed(() => selectedCategory.value?.name ?? slug.value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '))
 const products = computed(() => productResponse.value?.data ?? [])
 const meta = computed(() => productResponse.value?.meta)
@@ -131,10 +136,50 @@ const addToBag = async (product: Product, productVariantId?: string | number) =>
   noticeTimer = setTimeout(() => { notice.value = '' }, 2600)
 }
 
+const { absoluteUrl, canonicalUrl } = useSiteSeo()
+const categoryDescription = computed(() => `Shop the Glamrush edit of ${categoryName.value.toLowerCase()}, selected for character, quality and lasting impression.`)
+const hasSeoFilters = computed(() => Boolean(brand.value || search.value || priceMin.value !== undefined || priceMax.value !== undefined || onSale.value || selectedAttributes.value.length || sortKey.value !== 'recommended'))
+
 useSeoMeta({
   title: () => `${categoryName.value} — Glamrush`,
-  description: () => `Shop the Glamrush edit of ${categoryName.value.toLowerCase()}, selected for character, quality and lasting impression.`,
+  description: () => categoryDescription.value,
+  robots: () => hasSeoFilters.value ? 'noindex, follow' : 'index, follow',
+  ogTitle: () => `${categoryName.value} — Glamrush`,
+  ogDescription: () => categoryDescription.value,
+  ogUrl: () => canonicalUrl.value,
+  twitterTitle: () => `${categoryName.value} — Glamrush`,
+  twitterDescription: () => categoryDescription.value,
 })
+
+useJsonLd('category-schema', () => ({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'CollectionPage',
+      '@id': `${canonicalUrl.value}#collection`,
+      'name': categoryName.value,
+      'description': categoryDescription.value,
+      'url': canonicalUrl.value,
+      'mainEntity': {
+        '@type': 'ItemList',
+        'numberOfItems': meta.value?.total ?? products.value.length,
+        'itemListElement': products.value.map((product, index) => ({
+          '@type': 'ListItem',
+          'position': index + 1,
+          'name': product.name,
+          'url': absoluteUrl(`/product/${product.slug}`),
+        })),
+      },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      'itemListElement': [
+        { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': absoluteUrl('/') },
+        { '@type': 'ListItem', 'position': 2, 'name': categoryName.value, 'item': canonicalUrl.value },
+      ],
+    },
+  ],
+}))
 </script>
 
 <template>
