@@ -10,6 +10,7 @@ export interface Category {
   id: string | number
   name: string
   slug: string
+  sort_order?: number
   images?: string | MediaImage | Array<string | MediaImage> | null
   children?: Category[]
   product_count?: number
@@ -144,7 +145,7 @@ export interface AttributeFacet {
 export interface ProductFacets {
   price_range?: { min: number; max: number }
   brands?: Array<{ id: string | number; name: string; slug: string; count: number }>
-  categories?: Array<{ id: string | number; name: string; slug: string; count: number }>
+  categories?: Array<{ id: string | number; name: string; slug: string; sort_order?: number; count: number }>
   attributes?: AttributeFacet[]
 }
 
