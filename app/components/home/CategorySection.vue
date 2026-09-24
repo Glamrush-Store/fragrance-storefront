@@ -5,6 +5,8 @@ import { applyCatalogImageFallback } from '~/utils/catalog'
 const props = defineProps<{ section: HomepageSection }>()
 const categories = computed(() => props.section.items
   .filter((item): item is Category => !('price' in item))
+  .sort((a, b) => (a.sort_order ?? Number.MAX_SAFE_INTEGER) - (b.sort_order ?? Number.MAX_SAFE_INTEGER)
+    || a.name.localeCompare(b.name))
   .slice(0, 6))
 const fallbacks = [
   'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=900&q=85',

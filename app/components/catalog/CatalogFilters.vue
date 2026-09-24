@@ -31,6 +31,9 @@ const maxDraft = ref<number | undefined>()
 
 const facetMin = computed(() => Math.floor(Number(props.facets?.price_range?.min ?? 0)))
 const facetMax = computed(() => Math.ceil(Number(props.facets?.price_range?.max ?? 0)))
+const sortedCategories = computed(() => [...(props.facets?.categories ?? [])]
+  .sort((a, b) => (a.sort_order ?? Number.MAX_SAFE_INTEGER) - (b.sort_order ?? Number.MAX_SAFE_INTEGER)
+    || a.name.localeCompare(b.name)))
 const priceStep = computed(() => {
   const maximum = facetMax.value
 
@@ -94,13 +97,13 @@ const applyPrice = () => {
       </button>
     </div>
 
-    <details v-if="facets?.categories?.length" open class="group">
+    <details v-if="sortedCategories.length" open class="group">
       <summary class="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">
         Category <UIcon name="i-lucide-chevron-down" class="size-4 transition-transform group-open:rotate-180" />
       </summary>
       <div class="mt-4 space-y-1">
         <NuxtLink
-          v-for="category in facets.categories"
+          v-for="category in sortedCategories"
           :key="category.id"
           :to="`/category/${category.slug}`"
           class="flex items-center justify-between rounded-md px-2 py-2 text-sm transition hover:bg-neutral-100"
