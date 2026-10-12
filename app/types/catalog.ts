@@ -97,6 +97,20 @@ export type HomepageSectionType =
   | 'manual_products'
   | 'newest_products'
   | 'random_categories'
+  | 'split_image_banner'
+
+export interface SplitImageBannerCta {
+  label: string
+  url: string
+}
+
+export interface SplitImageBannerItem {
+  slot: 'left' | 'right'
+  sort_order: number
+  image: string
+  description: string
+  cta: SplitImageBannerCta | null
+}
 
 export interface HomepageSection {
   id: string
@@ -104,7 +118,8 @@ export interface HomepageSection {
   title: string
   subtitle?: string | null
   display_order: number
-  items: Array<Product | Category>
+  items: Array<Product | Category | SplitImageBannerItem>
+  mobile_image?: string | null
 }
 
 export interface StorefrontHomepage {
