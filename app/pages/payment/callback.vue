@@ -22,9 +22,9 @@ const restoring = ref(false)
 const pendingPayment = ref<PendingPayment>({})
 const provider = computed(() => {
   const value = typeof route.query.provider === 'string' ? route.query.provider.toLowerCase() : pendingPayment.value.provider?.toLowerCase()
-  return value === 'paystack' || value === 'flutterwave' ? value : null
+  return value === 'bachs' || value === 'paystack' || value === 'flutterwave' ? value : null
 })
-const transactionId = computed(() => String(route.query.transaction_id || route.query.reference || pendingPayment.value.reference || ''))
+const transactionId = computed(() => String(route.query.checkout_id || route.query.transaction_id || route.query.reference || pendingPayment.value.reference || ''))
 const callbackReference = computed(() => String(route.query.tx_ref || route.query.reference || result.value?.reference || ''))
 const receiptOrder = computed(() => pendingPayment.value.orderNumber || result.value?.payment.order_id || 'Unavailable')
 const canRetryPayment = computed(() => Boolean(pendingPayment.value.orderId && pendingPayment.value.paymentMethod && pendingPayment.value.paymentMethod !== 'pay_on_delivery'))
@@ -36,7 +36,7 @@ const formatMoney = (amount: number | string, currency: string) => new Intl.Numb
 const formatDate = (value: Date | null) => value ? new Intl.DateTimeFormat('en-NG', {
   dateStyle: 'medium', timeStyle: 'short',
 }).format(value) : '-'
-const providerName = computed(() => provider.value === 'flutterwave' ? 'Flutterwave' : provider.value === 'paystack' ? 'Paystack' : 'Payment provider')
+const providerName = computed(() => provider.value === 'bachs' ? 'Bachs' : provider.value === 'flutterwave' ? 'Flutterwave' : provider.value === 'paystack' ? 'Paystack' : 'Payment provider')
 const newIdempotencyKey = () => globalThis.crypto?.randomUUID?.()
   || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`
 
