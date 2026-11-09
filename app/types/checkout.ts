@@ -60,10 +60,12 @@ export interface ShippingOption {
 export interface PaymentMethod {
   id: string
   name: string
-  code: 'paystack' | 'flutterwave' | 'pay_on_delivery'
+  code: 'bachs' | 'paystack' | 'flutterwave' | 'pay_on_delivery'
   description: string | null
   public_config: Record<string, unknown> | null
 }
+
+export type PaymentProvider = Exclude<PaymentMethod['code'], 'pay_on_delivery'>
 
 export interface PaymentInitialization {
   payment: {

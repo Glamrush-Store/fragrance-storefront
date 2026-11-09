@@ -79,7 +79,7 @@
 
 ## Payment completion
 
-- Paystack and Flutterwave callback route
+- Bachs, Paystack, and Flutterwave callback route
 - Backend transaction verification
 - Completed, failed, pending, and verification-error states
 - Successful receipt/order summary

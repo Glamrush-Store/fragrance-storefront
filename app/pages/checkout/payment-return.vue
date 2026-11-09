@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { OrderRestoreCartResult, PaymentMethod } from '~/types/checkout'
+import type { OrderRestoreCartResult, PaymentMethod, PaymentProvider } from '~/types/checkout'
 
 const route = useRoute()
 const router = useRouter()
@@ -61,10 +61,10 @@ onMounted(async () => {
   pendingPayment.value = pending
 
   const queryProvider = typeof route.query.provider === 'string' ? route.query.provider : ''
-  const provider = (queryProvider || pending.provider || (route.query.transaction_id ? 'flutterwave' : 'paystack')) as 'paystack' | 'flutterwave'
-  const transactionId = String(route.query.transaction_id || route.query.reference || pending.reference || '')
+  const provider = (queryProvider || pending.provider || (route.query.transaction_id ? 'flutterwave' : 'paystack')) as PaymentProvider
+  const transactionId = String(route.query.checkout_id || route.query.transaction_id || route.query.reference || pending.reference || '')
 
-  if (!['paystack', 'flutterwave'].includes(provider) || !transactionId) {
+  if (!['bachs', 'paystack', 'flutterwave'].includes(provider) || !transactionId) {
     state.value = 'failed'
     message.value = 'The payment provider did not return enough information to verify this transaction.'
     return
