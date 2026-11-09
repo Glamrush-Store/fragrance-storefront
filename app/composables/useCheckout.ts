@@ -1,5 +1,5 @@
 import type { ApiResponse } from '~/types/catalog'
-import type { CheckoutOrder, CheckoutPayload, DiscountQuote, OrderRestoreCartResult, PaymentInitialization, PaymentMethod, ShippingOption } from '~/types/checkout'
+import type { CheckoutOrder, CheckoutPayload, DiscountQuote, OrderRestoreCartResult, PaymentInitialization, PaymentMethod, PaymentProvider, ShippingOption } from '~/types/checkout'
 
 export const useCheckout = () => {
   const api = useApi()
@@ -21,7 +21,7 @@ export const useCheckout = () => {
   const initializePayment = (orderId: string, paymentMethod: PaymentMethod['code'], idempotencyKey: string, cartTokenOverride?: string | null) => api.request<ApiResponse<PaymentInitialization>>('/payments/initialize', {
     method: 'POST', body: { order_id: orderId, payment_method: paymentMethod }, headers: { ...cartHeaders(), ...(cartTokenOverride ? { 'X-Cart-Token': cartTokenOverride } : {}), 'Idempotency-Key': idempotencyKey },
   })
-  const verifyPayment = (provider: 'paystack' | 'flutterwave', transactionId: string) => api.request<ApiResponse<PaymentInitialization>>('/payments/verify', {
+  const verifyPayment = (provider: PaymentProvider, transactionId: string) => api.request<ApiResponse<PaymentInitialization>>('/payments/verify', {
     method: 'POST', body: { provider, transaction_id: transactionId },
   })
   const restoreOrderCart = async (orderId: string, replaceCart = false, cartTokenOverride?: string | null) => {
