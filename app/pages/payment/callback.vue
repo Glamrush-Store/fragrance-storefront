@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { OrderRestoreCartResult, PaymentInitialization, PaymentMethod } from '~/types/checkout'
+import { resolvePaymentCallback } from '~/utils/paymentCallback'
 
 type CallbackState = 'verifying' | 'completed' | 'failed'
 type PendingPayment = { orderId?: string; orderNumber?: string; provider?: string; reference?: string; paymentMethod?: PaymentMethod['code']; cartToken?: string | null }
@@ -20,11 +21,9 @@ const retrying = ref(false)
 const restoring = ref(false)
 
 const pendingPayment = ref<PendingPayment>({})
-const provider = computed(() => {
-  const value = typeof route.query.provider === 'string' ? route.query.provider.toLowerCase() : pendingPayment.value.provider?.toLowerCase()
-  return value === 'bachs' || value === 'paystack' || value === 'flutterwave' ? value : null
-})
-const transactionId = computed(() => String(route.query.checkout_id || route.query.transaction_id || route.query.reference || pendingPayment.value.reference || ''))
+const callback = computed(() => resolvePaymentCallback(route.query, pendingPayment.value))
+const provider = computed(() => callback.value.provider)
+const transactionId = computed(() => callback.value.transactionId)
 const callbackReference = computed(() => String(route.query.tx_ref || route.query.reference || result.value?.reference || ''))
 const receiptOrder = computed(() => pendingPayment.value.orderNumber || result.value?.payment.order_id || 'Unavailable')
 const canRetryPayment = computed(() => Boolean(pendingPayment.value.orderId && pendingPayment.value.paymentMethod && pendingPayment.value.paymentMethod !== 'pay_on_delivery'))
